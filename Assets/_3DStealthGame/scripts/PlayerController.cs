@@ -13,7 +13,10 @@ public class PlayerMovement : MonoBehaviour
     public float turnSpeed = 20f;
     public float currentSpeed;
 
-    bool isRunning;
+    public bool isRunning;
+    public bool isWalking;
+
+
 
     Rigidbody m_Rigidbody;
     Vector3 m_Movement;
@@ -44,7 +47,7 @@ public class PlayerMovement : MonoBehaviour
         Vector3 desiredForward = Vector3.RotateTowards(transform.forward, m_Movement, turnSpeed * Time.deltaTime, 0f);
         m_Rotation = Quaternion.LookRotation(desiredForward);
 
-        bool isWalking = !Mathf.Approximately(horizontal,0f) || !Mathf.Approximately(vertical,0f);
+        isWalking = !Mathf.Approximately(horizontal,0f) || !Mathf.Approximately(vertical,0f);
         m_Animator.SetBool("isWalking", isWalking);
 
         m_Rigidbody.MoveRotation(m_Rotation);
