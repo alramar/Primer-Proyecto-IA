@@ -2,7 +2,14 @@ using UnityEngine;
 
 public class BatEnemy : MonoBehaviour
 {
-    
+    private Transform transform;
+
+    void Start()
+    {
+        transform = GetComponent<Transform>();
+        transform.position -= new Vector3(0, 2.6f, 0);
+    }
+
     void OnTriggerEnter (Collider other)
     {
         if (other.CompareTag("SoundCollider"))

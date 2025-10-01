@@ -52,17 +52,21 @@ namespace StealthGame
             bool hasVerticalInput = !Mathf.Approximately (vertical, 0f);
             bool isMoving = hasHorizontalInput || hasVerticalInput;
             m_Animator.SetBool ("IsWalking", isMoving);
-        
+
             if (isMoving)
             {
                 if (!m_AudioSource.isPlaying)
                 {
                     m_AudioSource.Play();
                 }
+
+                soundCollider.enabled = true;
             }
             else
             {
-                m_AudioSource.Stop ();
+                m_AudioSource.Stop();
+
+                soundCollider.enabled = false;
             }
 
             float currentSpeed = runSpeed;

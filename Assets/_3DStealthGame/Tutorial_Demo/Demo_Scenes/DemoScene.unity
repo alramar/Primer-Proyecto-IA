@@ -2667,7 +2667,7 @@ PrefabInstance:
     - target: {fileID: 3849530580544710755, guid: c126d90fa1fe4ac4abcc6e249c724bf0,
         type: 3}
       propertyPath: m_Lightmapping
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3913390685527688923, guid: c126d90fa1fe4ac4abcc6e249c724bf0,
         type: 3}
@@ -3693,7 +3693,7 @@ PrefabInstance:
     - target: {fileID: 5904790013994136103, guid: 62e7504d08c54bf42b3a8fa592812add,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.6
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5904790013994136103, guid: 62e7504d08c54bf42b3a8fa592812add,
         type: 3}
