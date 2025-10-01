@@ -8,9 +8,16 @@ namespace StealthGame
     public class PlayerMovement : MonoBehaviour
     {
         public InputAction MoveAction;
+        public InputAction WalkAction;
 
-        public float walkSpeed = 1.0f;
+        public float walkSpeed = 0.5f;
+        public float runSpeed = 1.0f;
         public float turnSpeed = 20f;
+
+        public float soundWalkRadius = 1.5f;
+        public float soundRunRadius = 3.0f;
+
+        public SphereCollider soundCollider;
 
         Animator m_Animator;
         Rigidbody m_Rigidbody;
@@ -21,13 +28,14 @@ namespace StealthGame
         // DEMO
         private List<string> m_OwnedKeys = new();
 
-        void Start ()
+        void Start()
         {
-            m_Animator = GetComponent<Animator> ();
-            m_Rigidbody = GetComponent<Rigidbody> ();
-            m_AudioSource = GetComponent<AudioSource> ();
-        
+            m_Animator = GetComponent<Animator>();
+            m_Rigidbody = GetComponent<Rigidbody>();
+            m_AudioSource = GetComponent<AudioSource>();
+
             MoveAction.Enable();
+            WalkAction.Enable();
         }
 
         void FixedUpdate ()
@@ -42,10 +50,10 @@ namespace StealthGame
 
             bool hasHorizontalInput = !Mathf.Approximately (horizontal, 0f);
             bool hasVerticalInput = !Mathf.Approximately (vertical, 0f);
-            bool isWalking = hasHorizontalInput || hasVerticalInput;
-            m_Animator.SetBool ("IsWalking", isWalking);
+            bool isMoving = hasHorizontalInput || hasVerticalInput;
+            m_Animator.SetBool ("IsWalking", isMoving);
         
-            if (isWalking)
+            if (isMoving)
             {
                 if (!m_AudioSource.isPlaying)
                 {
@@ -57,11 +65,19 @@ namespace StealthGame
                 m_AudioSource.Stop ();
             }
 
+            float currentSpeed = runSpeed;
+            soundCollider.radius = soundRunRadius;
+            if (WalkAction.IsPressed())
+            {
+                currentSpeed = walkSpeed;
+                soundCollider.radius = soundWalkRadius;
+            }
+
             Vector3 desiredForward = Vector3.RotateTowards (transform.forward, m_Movement, turnSpeed * Time.deltaTime, 0f);
             m_Rotation = Quaternion.LookRotation (desiredForward);
         
             m_Rigidbody.MoveRotation (m_Rotation);
-            m_Rigidbody.MovePosition (m_Rigidbody.position + m_Movement * walkSpeed * Time.deltaTime);
+            m_Rigidbody.MovePosition (m_Rigidbody.position + m_Movement * currentSpeed * Time.deltaTime);
         }
 
         public void AddKey(string keyName)
