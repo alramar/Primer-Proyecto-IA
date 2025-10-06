@@ -7,6 +7,7 @@ public class Espectro : Enemy
     [Header("Espectro Specific Settings")]
     public List<Object> objects_to_possess;
     public float possession_range = 5.0f;
+    public Transform player;
     public new void Start()
     {
 
@@ -18,18 +19,11 @@ public class Espectro : Enemy
 
     }
 
-    private void SetSpeed(float newSpeed)
+    public void Possess()
     {
-        speed = newSpeed;
-    }
+        // Uses A* Pathfinding to move to the nearest object in objects_to_possess within possession_range
+        // or goes close to the object nearest to the player jumping between objects
 
-    private void SetRotationSpeed(float newRotationSpeed)
-    {
-        rotation_speed = newRotationSpeed;
-    }
-    
-    private void SetDetectionRange(float newDetectionRange)
-    {
-        detection_range = newDetectionRange;
+
     }
 }
