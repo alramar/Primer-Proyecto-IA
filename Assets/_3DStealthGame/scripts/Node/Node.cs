@@ -8,9 +8,10 @@ public class Node : MonoBehaviour
     public Transform player;
     public bool isObject = false;
     public List<Node> neighbors = new List<Node>();
+    private ParticleSystem ps;
     void Start()
     {
-        
+        ps = GetComponent<ParticleSystem>();
     }
 
     // Update is called once per frame
