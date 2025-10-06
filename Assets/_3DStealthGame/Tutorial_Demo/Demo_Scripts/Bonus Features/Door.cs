@@ -1,23 +1,21 @@
 using System;
 using UnityEngine;
 
-namespace StealthGame
+
+public class Door : MonoBehaviour
 {
-    public class Door : MonoBehaviour
+    public string KeyName = "key1";
+
+    private void OnCollisionEnter(Collision other)
     {
-        public string KeyName = "key1";
-    
-        private void OnCollisionEnter(Collision other)
+        PlayerController player = other.gameObject.GetComponent<PlayerController>();
+
+        if (player == null)
+            return;
+
+        if (player.OwnKey(KeyName))
         {
-            PlayerMovement player = other.gameObject.GetComponent<PlayerMovement>();
-
-            if (player == null)
-                return;
-
-            if (player.OwnKey(KeyName))
-            {
-                Destroy(gameObject);
-            }
+            Destroy(gameObject);
         }
     }
 }

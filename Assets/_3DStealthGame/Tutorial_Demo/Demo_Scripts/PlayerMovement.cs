@@ -3,95 +3,89 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace StealthGame
+public class PlayerController : MonoBehaviour
 {
-    public class PlayerMovement : MonoBehaviour
-    {
-        public InputAction MoveAction;
-        public InputAction WalkAction;
+    public InputAction MoveAction;
+    public InputAction WalkAction;
 
-        public float walkSpeed = 0.5f;
-        public float runSpeed = 1.0f;
-        public float turnSpeed = 20f;
-
-        public float soundWalkRadius = 1.5f;
-        public float soundRunRadius = 3.0f;
-
-        public SphereCollider soundCollider;
-
-        Animator m_Animator;
-        Rigidbody m_Rigidbody;
-        AudioSource m_AudioSource;
-        Vector3 m_Movement;
-        Quaternion m_Rotation = Quaternion.identity;
+    public bool isWalking;
+    public bool isMoving;
     
-        // DEMO
-        private List<string> m_OwnedKeys = new();
+    public float walkSpeed = 0.5f;
+    public float runSpeed = 1.0f;
+    public float turnSpeed = 20f;
 
-        void Start()
+    Animator m_Animator;
+    Rigidbody m_Rigidbody;
+    AudioSource m_AudioSource;
+    Vector3 m_Movement;
+    Quaternion m_Rotation = Quaternion.identity;
+
+    // DEMO
+    private List<string> m_OwnedKeys = new();
+
+    void Start()
+    {
+        m_Animator = GetComponent<Animator>();
+        m_Rigidbody = GetComponent<Rigidbody>();
+        m_AudioSource = GetComponent<AudioSource>();
+
+        MoveAction.Enable();
+        WalkAction.Enable();
+    }
+
+    void FixedUpdate()
+    {
+        var pos = MoveAction.ReadValue<Vector2>();
+    
+        float horizontal = pos.x;
+        float vertical = pos.y;
+    
+        m_Movement.Set(horizontal, 0f, vertical);
+        m_Movement.Normalize();
+
+        bool hasHorizontalInput = !Mathf.Approximately(horizontal, 0f);
+        bool hasVerticalInput = !Mathf.Approximately(vertical, 0f);
+        isMoving = hasHorizontalInput || hasVerticalInput;
+        m_Animator.SetBool("IsWalking", isMoving);
+
+        if (isMoving)
         {
-            m_Animator = GetComponent<Animator>();
-            m_Rigidbody = GetComponent<Rigidbody>();
-            m_AudioSource = GetComponent<AudioSource>();
-
-            MoveAction.Enable();
-            WalkAction.Enable();
-        }
-
-        void FixedUpdate ()
-        {
-            var pos = MoveAction.ReadValue<Vector2>();
-        
-            float horizontal = pos.x;
-            float vertical = pos.y;
-        
-            m_Movement.Set(horizontal, 0f, vertical);
-            m_Movement.Normalize ();
-
-            bool hasHorizontalInput = !Mathf.Approximately (horizontal, 0f);
-            bool hasVerticalInput = !Mathf.Approximately (vertical, 0f);
-            bool isMoving = hasHorizontalInput || hasVerticalInput;
-            m_Animator.SetBool ("IsWalking", isMoving);
-
-            if (isMoving)
+            if (WalkAction.IsPressed())
             {
-                if (!m_AudioSource.isPlaying)
-                {
-                    m_AudioSource.Play();
-                }
-
-                soundCollider.enabled = true;
+                m_AudioSource.volume = 0.5f;
+                isWalking = true;
             }
             else
             {
-                m_AudioSource.Stop();
-
-                soundCollider.enabled = false;
+                m_AudioSource.volume = 1f;
+                isWalking = false;
             }
-
-            float currentSpeed = runSpeed;
-            soundCollider.radius = soundRunRadius;
-            if (WalkAction.IsPressed())
-            {
-                currentSpeed = walkSpeed;
-                soundCollider.radius = soundWalkRadius;
-            }
-
-            Vector3 desiredForward = Vector3.RotateTowards (transform.forward, m_Movement, turnSpeed * Time.deltaTime, 0f);
-            m_Rotation = Quaternion.LookRotation (desiredForward);
-        
-            m_Rigidbody.MoveRotation (m_Rotation);
-            m_Rigidbody.MovePosition (m_Rigidbody.position + m_Movement * currentSpeed * Time.deltaTime);
+            
+            if (!m_AudioSource.isPlaying)
+                m_AudioSource.Play();
         }
-
-        public void AddKey(string keyName)
+        else
         {
-            m_OwnedKeys.Add(keyName);
+            m_AudioSource.Stop();
         }
 
-        public bool OwnKey(string keyName)
-        {
-            return m_OwnedKeys.Contains(keyName);
-        }
+        float currentSpeed = WalkAction.IsPressed() ? walkSpeed : runSpeed;
+
+        Vector3 desiredForward = Vector3.RotateTowards(transform.forward, m_Movement, turnSpeed * Time.deltaTime, 0f);
+        m_Rotation = Quaternion.LookRotation(desiredForward);
+
+        m_Rigidbody.MoveRotation(m_Rotation);
+        m_Rigidbody.MovePosition(m_Rigidbody.position + m_Movement * currentSpeed * Time.deltaTime);
+    }
+
+    public void AddKey(string keyName)
+    {
+        m_OwnedKeys.Add(keyName);
+    }
+
+    public bool OwnKey(string keyName)
+    {
+        return m_OwnedKeys.Contains(keyName);
     }
 }

@@ -1,22 +1,20 @@
 using System;
 using UnityEngine;
 
-namespace StealthGame
+
+public class Key : MonoBehaviour
 {
-    public class Key : MonoBehaviour
+    public string KeyName = "key1";
+
+    private void OnTriggerEnter(Collider other)
     {
-        public string KeyName = "key1";
+        PlayerController player = other.gameObject.GetComponent<PlayerController>();
 
-        private void OnTriggerEnter(Collider other)
-        {
-            PlayerMovement player = other.gameObject.GetComponent<PlayerMovement>();
-
-            //this wasn't a player
-            if (player == null)
-                return;
-        
-            player.AddKey(KeyName);
-            Destroy(gameObject);
-        }
+        //this wasn't a player
+        if (player == null)
+            return;
+    
+        player.AddKey(KeyName);
+        Destroy(gameObject);
     }
 }
