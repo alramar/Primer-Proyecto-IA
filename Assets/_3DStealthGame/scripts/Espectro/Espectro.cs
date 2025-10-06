@@ -8,9 +8,11 @@ public class Espectro : Enemy
     public List<Object> objects_to_possess;
     public float possession_range = 5.0f;
     public Transform player;
+    public Node startNode;
+    private Node currentNode;
     public new void Start()
     {
-
+        currentNode = startNode;
     }
 
     // Update is called once per frame
@@ -19,11 +21,29 @@ public class Espectro : Enemy
 
     }
 
-    public void Possess()
+    public void AStarRoute()
     {
-        // Uses A* Pathfinding to move to the nearest object in objects_to_possess within possession_range
-        // or goes close to the object nearest to the player jumping between objects
+        // Implementation for A* pathfinding
+        List<Node> openSet = new List<Node>();
+        List<Node> closedSet = new List<Node>();
+        openSet.Add(currentNode);
 
+        while (openSet.Count > 0)
+        {
+            closedSet.Add(currentNode);
+            foreach (Node neighbor in currentNode.neighbors)
+            {
+                if (!closedSet.Contains(neighbor))
+                {
+                    openSet.Add(neighbor);
+                }
+            }
 
+            openSet.Remove(currentNode);
+            // Sort by lowest cost by node
+            openSet.Sort((a, b) => a.cost.CompareTo(b.cost));
+            currentNode = openSet[0];
+            
+        }
     }
 }

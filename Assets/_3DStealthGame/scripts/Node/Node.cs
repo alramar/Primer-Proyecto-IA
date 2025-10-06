@@ -8,6 +8,8 @@ public class Node : MonoBehaviour
     public Transform player;
     public bool isObject = false;
     public List<Node> neighbors = new List<Node>();
+    private float heuristics;
+    public float cost;
     private ParticleSystem ps;
     void Start()
     {
@@ -19,5 +21,6 @@ public class Node : MonoBehaviour
     {
         // Calculate distance to player
         distanceToPlayer = Vector3.Distance(transform.position, player.position);
+        cost = distanceToPlayer + heuristics;
     }
 }
