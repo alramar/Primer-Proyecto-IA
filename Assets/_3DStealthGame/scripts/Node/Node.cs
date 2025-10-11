@@ -10,6 +10,9 @@ public class Node : MonoBehaviour
     public List<Node> neighbors = new List<Node>();
     private float heuristics;
     public float cost;
+    public float gScore;
+    public float fScore;
+    public bool visited;
     private ParticleSystem ps;
     void Start()
     {
