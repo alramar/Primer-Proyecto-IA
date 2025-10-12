@@ -17,6 +17,11 @@ public class Node : MonoBehaviour
     void Start()
     {
         ps = GetComponent<ParticleSystem>();
+        // if there's a ps, disables it
+        if (ps != null)
+        {
+            ps.Stop();
+        }
     }
 
     // Update is called once per frame
