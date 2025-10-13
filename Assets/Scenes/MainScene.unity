@@ -1720,6 +1720,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Tracker
       objectReference: {fileID: 0}
+    - target: {fileID: 1483647258014381534, guid: b5ec3fcdc9448a84ebbe1c23b1b6dbd2,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2296037558399643492, guid: b5ec3fcdc9448a84ebbe1c23b1b6dbd2,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -1770,7 +1775,8 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 3796832138432968633, guid: b5ec3fcdc9448a84ebbe1c23b1b6dbd2, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []

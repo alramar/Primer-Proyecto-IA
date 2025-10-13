@@ -8,7 +8,7 @@ public class Key : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        PlayerController player = other.gameObject.GetComponent<PlayerController>();
+        PlayerMovement player = other.gameObject.GetComponent<PlayerMovement>();
 
         //this wasn't a player
         if (player == null)

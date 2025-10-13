@@ -8,7 +8,7 @@ public class Door : MonoBehaviour
 
     private void OnCollisionEnter(Collision other)
     {
-        PlayerController player = other.gameObject.GetComponent<PlayerController>();
+        PlayerMovement player = other.gameObject.GetComponent<PlayerMovement>();
 
         if (player == null)
             return;
