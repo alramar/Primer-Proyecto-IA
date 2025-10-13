@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Enemy : MonoBehaviour
+public class Enemy_A : MonoBehaviour
 {
     [Header("Enemy Settings")]
     public float speed = 3.0f;

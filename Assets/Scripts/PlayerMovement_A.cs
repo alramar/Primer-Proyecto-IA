@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PlayerMovement : MonoBehaviour
+public class PlayerMovement_A : MonoBehaviour
 {
     public InputAction MoveAction;
     Animator m_Animator;

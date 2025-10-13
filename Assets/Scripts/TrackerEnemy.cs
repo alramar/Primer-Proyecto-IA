@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Assets.Scripts.Algorithms;
 using Unity.Collections;
@@ -39,6 +40,7 @@ public class TrackerEnemy : Enemy
     Node currentPathObjective;
     Node nextPathObjective;
     bool objectiveReached = true;
+    bool isFar = true;
     [SerializeField]
     float farAwayPatrolRadius = 0;
     [SerializeField]
@@ -72,16 +74,14 @@ public class TrackerEnemy : Enemy
     {
         rb = GetComponent<Rigidbody>();
         animator = GetComponent<Animator>();
-    }
-
-    void Start()
-    {
+        visitedNodes = new();
         SetUpVisionRayCasts();
-    }
 
+    }
 
     void FixedUpdate()
     {
+        PrepareRayCasts();
         Patrol();
         Move();
     }
@@ -118,28 +118,32 @@ public class TrackerEnemy : Enemy
     {
         if (objectiveReached)
         {
-            if (currentPathObjective)
+            if (isFar)
             {
-                visitedNodes.Add(currentPathObjective);
-                lastPathNodeVisited = currentPathObjective;
-                currentPathObjective = nextPathObjective;
-                nextPathObjective = graph.GetFirstNodeInRadius(lastPathNodeVisited.transform, nearbyPatrolRadius);
+                nextPathObjective = graph.GetFurthestNodeInRadius(lastPathNodeVisited != null? lastPathNodeVisited.transform : transform, farAwayPatrolRadius, visitedNodes);
             }
             else
             {
-                currentPathObjective = graph.GetFirstNodeInRadius(transform, farAwayPatrolRadius);
-                nextPathObjective = graph.GetFirstNodeInRadius(currentPathObjective.transform, farAwayPatrolRadius);
+                nextPathObjective = graph.GetFurthestNodeInRadius(lastPathNodeVisited != null? lastPathNodeVisited.transform : transform, nearbyPatrolRadius, visitedNodes);
             }
-            path = graph.TryPathing(transform, currentPathObjective);
+            if(currentPathObjective){
+                visitedNodes.Add(currentPathObjective);
+                lastPathNodeVisited = currentPathObjective;
+
+            }
+            currentPathObjective = nextPathObjective;
             objectiveReached = false;
+            path = graph.TryPathing(transform, currentPathObjective);
+            Debug.Log(path.Count);
         }
         else
         {
-            CalculateFollowPath();
-            FollowPath();
+            //CalculateFollowPath();
+
+            FollowAStarPath();
         }
-        
-        
+
+
     }
 
 
@@ -212,14 +216,20 @@ public class TrackerEnemy : Enemy
             Gizmos.DrawRay(eyeHeight.position, command.direction * rayDistance);
 
         }
+        Gizmos.color = Color.magenta;
+        Gizmos.DrawWireCube(currentPathObjective.transform.position, Vector3.one * 0.2f);
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireCube(nextPathObjective.transform.position, Vector3.one * 0.2f);
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireCube(nextPathObjective.transform.position, Vector3.one * 0.2f);
 
 #if UNITY_EDITOR
         // Etiqueta con la distance real al path
         if (Application.isPlaying)
             UnityEditor.Handles.Label(transform.position + Vector3.up * 0.5f,
                 $"Distance={Vector3.Distance(future, normalPoint):F2}");
-                UnityEditor.Handles.Label(transform.position + Vector3.up * 1f,
-                $"CurrentPoint={currentPathIndex:F2}");
+        UnityEditor.Handles.Label(transform.position + Vector3.up * 1f,
+        $"CurrentPoint={currentPathIndex:F2}");
 #endif
 
     }
@@ -235,7 +245,10 @@ public class TrackerEnemy : Enemy
 
     void Move()
     {
-        transform.forward = Vector3.RotateTowards(transform.forward, rb.linearVelocity, rotation_speed, maxForce);
+        if(Vector3.Angle(transform.forward, rb.linearVelocity) > 0.1f){
+            transform.forward = Vector3.RotateTowards(transform.forward, rb.linearVelocity, rotation_speed, maxForce);
+        }
+
         rb.AddForce(steer, ForceMode.Acceleration);
     }
 
@@ -312,7 +325,6 @@ public class TrackerEnemy : Enemy
     {
         if (path == null || path.Count < 2) return;
         targetPoint = Vector3.zero;
-        float bestDistance = float.PositiveInfinity;
         normalPoint = Vector3.zero;
         Vector3 bestDirection = Vector3.zero;
         float lookAhead = Mathf.Clamp(rb.linearVelocity.magnitude * 0.5f, 1f, 5f);
@@ -351,6 +363,37 @@ public class TrackerEnemy : Enemy
 
         normalPoint = possibleNormalPoint;
         targetPoint = normalPoint + bestDirection * lookAhead;
+        FollowPath();
+    }
+
+    void FollowAStarPath()
+    {
+        if (path == null || path.Count < 2) return;
+        targetPoint = Vector3.zero;
+        float lookAhead = Math.Clamp(rb.linearVelocity.magnitude, 0.5f, 1f);
+        future = transform.position + rb.linearVelocity.normalized * lookAhead;
+        Vector3 a = path[currentPathIndex].transform.position;
+        Vector3 b = path[currentPathIndex + 1].transform.position;
+        float t;
+        normalPoint = GetNormalPoint(future, a, b, out t);
+
+        if (t >= 1f)
+        {
+            if (currentPathIndex < path.Count - 2)
+            {
+                currentPathIndex++;
+            }
+            else
+            {
+                objectiveReached = true;
+                isFar = !isFar;
+                currentPathIndex = 0;
+            }
+        }
+        Vector3 direction = (b - a).normalized;
+        targetPoint = normalPoint + direction * lookAhead;
+        FollowPath();
+
     }
     void FollowPath()
     {
@@ -358,7 +401,7 @@ public class TrackerEnemy : Enemy
         float dist = Vector3.Distance(future, normalPoint);
         if (dist > pathRadius)
             Seek(targetPoint);
-        
+
     }
 
 

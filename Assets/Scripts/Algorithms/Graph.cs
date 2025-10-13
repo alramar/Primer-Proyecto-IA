@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Assets.Scripts.Algorithms;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace Assets.Scripts.Algorithms
 {
@@ -19,8 +20,11 @@ namespace Assets.Scripts.Algorithms
         [SerializeField]
         float nodeSeparation = 3;
         float nodeSpace;
+        [SerializeField]
+        float nodeNeighbourRange = 4f;
         List<GameObject> generatedGONodes;
         [SerializeField]
+        LayerMask layerMask;
         // Start is called once before the first execution of Update after the MonoBehaviour is created
         void Awake()
         {
@@ -44,10 +48,6 @@ namespace Assets.Scripts.Algorithms
             Node goal = GetClosestNode(goalObject);
             res = new();
             res = AStar.BreadthFirstSearch(start, goal, comeFrom, costSoFar);
-            foreach (KeyValuePair<Node, Node> pair in res)
-            {
-                Debug.Log(pair.ToString());
-            }
             solution = AStar.ReconstructPath(start, goal, res);
             return solution;
         }
@@ -59,10 +59,6 @@ namespace Assets.Scripts.Algorithms
             Node start = GetClosestNode(startObject);
             res = new();
             res = AStar.BreadthFirstSearch(start, goalNode, comeFrom, costSoFar);
-            foreach (KeyValuePair<Node, Node> pair in res)
-            {
-                Debug.Log(pair.ToString());
-            }
             solution = AStar.ReconstructPath(start, goalNode, res);
             return solution;
         }
@@ -74,10 +70,6 @@ namespace Assets.Scripts.Algorithms
             Node goal = GetClosestNode(goalObject);
             res = new();
             res = AStar.BreadthFirstSearch(startNode, goal, comeFrom, costSoFar);
-            foreach (KeyValuePair<Node, Node> pair in res)
-            {
-                Debug.Log(pair.ToString());
-            }
             solution = AStar.ReconstructPath(startNode, goal, res);
             return solution;
         }
@@ -88,43 +80,113 @@ namespace Assets.Scripts.Algorithms
             Dictionary<Node, float> costSoFar = new();
             res = new();
             res = AStar.BreadthFirstSearch(startNode, goalNode, comeFrom, costSoFar);
-            foreach (KeyValuePair<Node, Node> pair in res)
-            {
-                Debug.Log(pair.ToString());
-            }
             solution = AStar.ReconstructPath(startNode, goalNode, res);
             return solution;
         }
 
-        Node GetClosestNode(Transform startObject)
+        public Node GetClosestNode(Transform startObject, List<Node> excludedNodes = null)
         {
+            excludedNodes ??= new();
             float minDistance = Vector3.Distance(generatedGONodes[0].transform.position, startObject.position);
             Node selection = generatedGONodes[0].GetComponent<Node>();
             foreach (GameObject nodeGO in generatedGONodes)
             {
+                Node aux = nodeGO.GetComponent<Node>();
                 float distance = Vector3.Distance(nodeGO.transform.position, startObject.position);
-                if (minDistance > distance)
+                Debug.Log("minDist: " + minDistance + " vs dist: " + distance);
+                if (minDistance >= distance )//&& !excludedNodes.Contains(aux))
                 {
-                    distance = minDistance;
+                    minDistance = distance;
                     selection = nodeGO.GetComponent<Node>();
                 }
             }
             return selection;
         }
 
-        public Node GetFirstNodeInRadius(Transform startObject, float radius)
+        public Node GetFirstNodeInRadius(Transform startObject, float radius, List<Node> excludedNodes = null)
         {
+            excludedNodes ??= new();
             foreach (GameObject nodeGO in generatedGONodes)
             {
+                Node aux = nodeGO.GetComponent<Node>();
                 float distance = Vector3.Distance(nodeGO.transform.position, startObject.position);
-                if (radius >= distance)
+                if (radius >= distance )//&& !excludedNodes.Contains(aux))
                 {
-                    return nodeGO.GetComponent<Node>();
+                    return aux;
 
                 }
             }
             return null;
         }
+
+        public Node GetANodeInRadius(Transform startObject, float radius, List<Node> excludedNodes = null)
+        {
+            excludedNodes ??= new();
+            float i = 1f;
+            float probability = i / generatedGONodes.Count;
+            float random;
+            foreach (GameObject nodeGO in generatedGONodes)
+            {
+                Node aux = nodeGO.GetComponent<Node>();
+                random = Random.Range(0f, 1f);
+                float distance = Vector3.Distance(nodeGO.transform.position, startObject.position);
+                float ratio = distance / radius;
+                probability += ratio;
+                //Debug.Log("CHANCES " + random + " : " + probability);
+                if (radius >= distance && random <= probability )//&& !excludedNodes.Contains(aux))
+                {
+                    return aux;
+
+                }
+                i++;
+                probability = (float)(i / generatedGONodes.Count) + 0.2f;
+            }
+            return null;
+        }
+
+
+        public Node GetANodeInRange(Transform startObject, float minRadius, float maxRadius, List<Node> excludedNodes = null)
+        {
+            excludedNodes ??= new();
+
+            float i = 1f;
+            float probability = i / generatedGONodes.Count + 0.2f;
+            float random;
+            foreach (GameObject nodeGO in generatedGONodes)
+            {
+                Node aux = nodeGO.GetComponent<Node>();
+                random = Random.Range(0f, 1f);
+                float distance = Vector3.Distance(nodeGO.transform.position, startObject.position);
+                if (maxRadius >= distance && minRadius <= distance && random < probability )//&& !excludedNodes.Contains(aux))
+                {
+                    return aux;
+
+                }
+                i++;
+                probability = (float)(i / generatedGONodes.Count) + 0.2f;
+            }
+            return null;
+        }
+
+        public Node GetFurthestNodeInRadius(Transform startObject, float radius, List<Node> excludedNodes = null)
+        {
+            excludedNodes ??= new();
+
+            Node maximumNode = null;
+            float maxDistance = 0f;
+            foreach (GameObject nodeGO in generatedGONodes)
+            {
+                Node aux = nodeGO.GetComponent<Node>();
+                float distance = Vector3.Distance(startObject.position, nodeGO.transform.position);
+                if (maxDistance < distance && radius >= distance)//&& !excludedNodes.Contains(aux))
+                {
+                    maxDistance = distance;
+                    maximumNode = aux;
+                }
+            }
+            return maximumNode;
+        }
+
 
         void OnDrawGizmos()
         {
@@ -234,17 +296,21 @@ namespace Assets.Scripts.Algorithms
                 Node aux = node.GetComponent<Node>();
                 foreach (GameObject nodeOther in generatedGONodes)
                 {
-                    float distance = Vector3.Distance(node.transform.position, nodeOther.transform.position);
-                    if (distance <= nodeSpace * 2.5)
+                    Vector3 a = node.transform.position;
+                    Vector3 b = nodeOther.transform.position;
+                    float distance = Vector3.Distance(a, b);
+                    if (distance < nodeNeighbourRange)
                     {
-                        Vector3 a = node.transform.position;
-                        Vector3 b = nodeOther.transform.position;
                         RaycastHit hit;
-                        if (!Physics.Raycast(a, b - a, out hit, distance) || (!hit.IsUnityNull() && hit.collider.name.Contains("Node")))
+                        if (Physics.Raycast(a, b - a, out hit, distance, layerMask))
                         {
                             //if (!visitedNodes.Contains(nodeOther))
-                            //{
-                            aux.neighbours.Add(nodeOther.GetComponent<Node>());
+                            //{F "+hit.col
+                            Node correct = null;
+                            if (hit.collider == null || hit.collider.TryGetComponent(out correct))
+                            {
+                                aux.neighbours.Add(correct);
+                            }
                             //}
                         }
                     }

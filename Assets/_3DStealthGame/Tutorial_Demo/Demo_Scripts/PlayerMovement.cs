@@ -11,6 +11,7 @@ namespace StealthGame
 
         public float walkSpeed = 1.0f;
         public float turnSpeed = 20f;
+        public Vector3 velocity = Vector3.zero;
 
         Animator m_Animator;
         Rigidbody m_Rigidbody;
@@ -61,7 +62,8 @@ namespace StealthGame
             m_Rotation = Quaternion.LookRotation (desiredForward);
         
             m_Rigidbody.MoveRotation (m_Rotation);
-            m_Rigidbody.MovePosition (m_Rigidbody.position + m_Movement * walkSpeed * Time.deltaTime);
+            m_Rigidbody.MovePosition(m_Rigidbody.position + m_Movement * walkSpeed * Time.deltaTime);
+            velocity = m_Rigidbody.linearVelocity;
         }
 
         public void AddKey(string keyName)
