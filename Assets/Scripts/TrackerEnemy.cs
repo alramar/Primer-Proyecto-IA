@@ -118,23 +118,28 @@ public class TrackerEnemy : Enemy
     {
         if (objectiveReached)
         {
-            if (isFar)
+            path = new();
+            while(path.Count == 0)
             {
-                nextPathObjective = graph.GetFurthestNodeInRadius(lastPathNodeVisited != null? lastPathNodeVisited.transform : transform, farAwayPatrolRadius, visitedNodes);
-            }
-            else
-            {
-                nextPathObjective = graph.GetFurthestNodeInRadius(lastPathNodeVisited != null? lastPathNodeVisited.transform : transform, nearbyPatrolRadius, visitedNodes);
-            }
-            if(currentPathObjective){
-                visitedNodes.Add(currentPathObjective);
-                lastPathNodeVisited = currentPathObjective;
+                if (isFar)
+                {
+                    nextPathObjective = graph.GetFurthestNodeInRadius(lastPathNodeVisited != null? lastPathNodeVisited.transform : transform, farAwayPatrolRadius, visitedNodes);
+                }
+                else
+                {
+                    nextPathObjective = graph.GetFurthestNodeInRadius(lastPathNodeVisited != null? lastPathNodeVisited.transform : transform, nearbyPatrolRadius, visitedNodes);
+                }
+                if(currentPathObjective){
+                    visitedNodes.Add(currentPathObjective);
+                    lastPathNodeVisited = currentPathObjective;
 
+                }
+                currentPathObjective = nextPathObjective;
+                objectiveReached = false;
+                path = graph.TryPathing(transform, currentPathObjective);
+                Debug.Log(path.Count);
+                
             }
-            currentPathObjective = nextPathObjective;
-            objectiveReached = false;
-            path = graph.TryPathing(transform, currentPathObjective);
-            Debug.Log(path.Count);
         }
         else
         {
