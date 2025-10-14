@@ -70,14 +70,11 @@ public class TrackerEnemy : Enemy
     [SerializeField]
     Transform eyeHeight;
 
-    public List<Node> VisitedNodes { get => visitedNodes; set => visitedNodes = value; }
-    public List<Node> VisitedNodes1 { get => visitedNodes; set => visitedNodes = value; }
-
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
         animator = GetComponent<Animator>();
-        VisitedNodes = new();
+        visitedNodes = new();
         SetUpVisionRayCasts();
 
     }
@@ -126,14 +123,14 @@ public class TrackerEnemy : Enemy
             {
                 if (isFar)
                 {
-                    nextPathObjective = graph.GetFurthestNodeInRadius(lastPathNodeVisited != null? lastPathNodeVisited.transform : transform, farAwayPatrolRadius, VisitedNodes);
+                    nextPathObjective = graph.GetFurthestNodeInRadius(lastPathNodeVisited != null? lastPathNodeVisited.transform : transform, farAwayPatrolRadius, visitedNodes);
                 }
                 else
                 {
-                    nextPathObjective = graph.GetFurthestNodeInRadius(lastPathNodeVisited != null? lastPathNodeVisited.transform : transform, nearbyPatrolRadius, VisitedNodes);
+                    nextPathObjective = graph.GetFurthestNodeInRadius(lastPathNodeVisited != null? lastPathNodeVisited.transform : transform, nearbyPatrolRadius, visitedNodes);
                 }
                 if(currentPathObjective){
-                    VisitedNodes.Add(currentPathObjective);
+                    visitedNodes.Add(currentPathObjective);
                     lastPathNodeVisited = currentPathObjective;
 
                 }

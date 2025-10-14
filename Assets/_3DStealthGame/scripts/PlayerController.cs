@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -12,18 +11,7 @@ public class PlayerMovement : MonoBehaviour
     public float walkSpeed = 1.0f;
     public float runSpeed = 2.0f;
     public float turnSpeed = 20f;
-
-    internal bool OwnKey(string keyName)
-    {
-        throw new NotImplementedException();
-    }
-
     public float currentSpeed;
-
-    internal void AddKey(string keyName)
-    {
-        throw new NotImplementedException();
-    }
 
     bool isRunning;
 
