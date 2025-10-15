@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PlayerMovement : MonoBehaviour
+public class PlayerMovement_A : MonoBehaviour
 {
     public InputAction MoveAction;
     Animator m_Animator;
@@ -21,13 +21,11 @@ public class PlayerMovement : MonoBehaviour
 
     public Vector3 velocity = Vector3.zero;
 
-
     void Start()
     {
         m_Rigidbody = GetComponent<Rigidbody>();
         MoveAction.Enable();
         m_Animator = GetComponent<Animator>();
-
         isRunning = false;
     }
 
@@ -49,8 +47,8 @@ public class PlayerMovement : MonoBehaviour
 
         bool isWalking = !Mathf.Approximately(horizontal,0f) || !Mathf.Approximately(vertical,0f);
         m_Animator.SetBool("isWalking", isWalking);
-
         m_Rigidbody.MoveRotation(m_Rotation);
         m_Rigidbody.MovePosition(m_Rigidbody.position + m_Movement * currentSpeed * Time.deltaTime);
+        velocity = m_Rigidbody.linearVelocity;
     }
 }
