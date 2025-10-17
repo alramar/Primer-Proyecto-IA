@@ -22,6 +22,7 @@ public class EnemyGhostMovement : MonoBehaviour
 
     private int behaviour;
     private int patrollState;
+    private float timeNoSee;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -31,6 +32,7 @@ public class EnemyGhostMovement : MonoBehaviour
         playerWalkRange = obj.GetComponent<Enemy>().detection_range;
         rotateSpeed = obj.GetComponent<Enemy>().rotation_speed;
         patrollState = 0;
+        timeNoSee = 0f;
         behaviour = 1; //0 = idle, 1 = patrulla, 2 = perseguir
     }
 
@@ -45,7 +47,7 @@ public class EnemyGhostMovement : MonoBehaviour
             if (player.GetComponent<PlayerMovement>().isWalking && distance <= playerWalkRange) { behaviour = 2; }
         }*/
 
-        switch (behaviour)
+        /*switch (behaviour)
         {
             case 0: break;
             case 1:
@@ -56,7 +58,16 @@ public class EnemyGhostMovement : MonoBehaviour
                 patroll();
                 break;
             default: chase(); break;
+        }*/
+        if (EnemyGhostVisor.seePlayer) { behaviour = 2; }
+        else
+        {
+            if (timeNoSee >= 3f) { behaviour = 1; timeNoSee = 0f; }
+            else { timeNoSee += Time.deltaTime; }
         }
+
+        if (behaviour == 1) { patroll(); }
+        else if (behaviour == 2) { chase(); }
     }
 
     void patroll()

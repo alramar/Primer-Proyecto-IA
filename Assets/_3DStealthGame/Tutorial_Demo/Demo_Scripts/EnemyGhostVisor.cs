@@ -3,7 +3,7 @@ using UnityEngine;
 public class EnemyGhostVisor : MonoBehaviour
 {
     public GameObject player;
-    public bool seePlayer;
+    public static bool seePlayer;
 
     void Start()
     {
