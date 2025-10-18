@@ -671,7 +671,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5904790013994136103}
   - component: {fileID: 2901670666483699748}
-  - component: {fileID: 807034391611246804}
+  - component: {fileID: 8819259836775472990}
   - component: {fileID: 5152253852569768531}
   - component: {fileID: 5574384581572255497}
   m_Layer: 0
@@ -721,7 +721,7 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &807034391611246804
+--- !u!114 &8819259836775472990
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -730,17 +730,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 6537493377709287581}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f6205e0d583819a49b17e45711fc80af, type: 3}
+  m_Script: {fileID: 11500000, guid: 6d8dfac2cad26c64c9bde063bac6eb47, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  runDetectionRadius: 1.5
-  walkDetectionRadius: 0.6
-  speed: 1
-  waypoints:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  velocidad: 2
+  radioDeteccionCaminar: 0.6
+  radioDeteccionCorrer: 1.5
 --- !u!136 &5152253852569768531
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -760,7 +755,7 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.2
+  m_Radius: 0.1
   m_Height: 0.4
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}

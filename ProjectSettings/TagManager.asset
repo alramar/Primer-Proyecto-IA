@@ -5,9 +5,7 @@ TagManager:
   serializedVersion: 3
   tags:
   - SoundCollider
-  - Suelo
-  - Obstaculo
-  - Enemigo
+  - Grafo
   layers:
   - Default
   - TransparentFX

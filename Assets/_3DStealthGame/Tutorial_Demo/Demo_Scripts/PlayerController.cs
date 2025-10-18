@@ -15,12 +15,11 @@ public class PlayerController : MonoBehaviour
     public float runSpeed = 1.0f;
     public float turnSpeed = 20f;
 
-    Animator m_Animator;
-    Rigidbody m_Rigidbody;
-    AudioSource m_AudioSource;
-    Vector3 m_Movement;
-    Quaternion m_Rotation = Quaternion.identity;
-
+    private Animator m_Animator;
+    private Rigidbody m_Rigidbody;
+    private AudioSource m_AudioSource;
+    private Vector3 m_Movement;
+    private Quaternion m_Rotation = Quaternion.identity;
     // DEMO
     private List<string> m_OwnedKeys = new();
 
