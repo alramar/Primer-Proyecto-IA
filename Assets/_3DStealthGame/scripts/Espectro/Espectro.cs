@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using GameEnding = StealthGame.GameEnding;
 
@@ -9,57 +7,87 @@ public class Espectro : Enemy
     [Header("Espectro Settings")]
     public float possessionRange = 5.0f;
     public float repathInterval = 1.0f;
+    public float possessionDuration = 5.0f;
     public Transform player;
     public Node startNode;
+    public GameEnding gameEnding;
     
     private Node currentNode;
     private List<Node> path;
     private Node currentTargetNode;
-    private float repathTimer = 0f;
-    private bool isPossessing = false;
+    private float repathTimer;
+    private bool isPossessing;
     private ParticleSystem currentParticleSystem;
-    private Node lastPossessedNode; // Track del último nodo objeto poseído
+    private bool hasPlayedParticlesThisCycle;
+    private Collider enemyCollider;
+
     public new void Start()
     {
         GetComponent<CapsuleCollider>().radius = detection_range;
+        GetComponent<CapsuleCollider>().height = detection_range * 2;
         base.Start();
+        
+        enemyCollider = GetComponent<Collider>();
         path = new List<Node>();
-        currentNode = startNode != null ? startNode : FindClosestNode(transform.position);
-
+        currentNode = startNode != null ? startNode : FindClosestNode();
+        
         if (currentNode == null)
         {
             Debug.LogError("Espectro: No se pudo encontrar nodo inicial");
             enabled = false;
-            return;
         }
-
-        CalculateNewPath();
+        else
+        {
+            CalculateNewPath();
+        }
     }
 
     public new void Update()
     {
         base.Update();
 
-        if (isPossessing) return;
+        repathTimer += Time.deltaTime;
+
+        if (isPossessing)
+        {
+            if (repathTimer >= repathInterval)
+            {
+                CheckForBetterObject();
+                repathTimer = 0f;
+            }
+            return;
+        }
 
         MoveAlongPath();
 
-        repathTimer += Time.deltaTime;
         if (repathTimer >= repathInterval)
         {
             TryRecalculatePath();
             repathTimer = 0f;
         }
+        Animate();
+    }
+    
+   private void Animate()
+   {
+        // Usar un objeto hijo para la animación de flotación
+        // Esto evita interferir con el movimiento principal
+        float hoverHeight = 0.1f;
+        float hoverSpeed = 3.0f;
+        
+        // Solo animar la posición local Y de un objeto hijo si existe
+        // O crear un pequeño desplazamiento visual sin afectar la física
+        float verticalOffset = Mathf.Sin(Time.time * hoverSpeed) * hoverHeight;
+        
+        // Aplicar offset mínimo que no afecte la colisión
+        transform.position = new Vector3(transform.position.x, transform.position.y + verticalOffset * 0.1f, transform.position.z);
     }
 
     private void MoveAlongPath()
     {
-        if (path == null || path.Count == 0) 
+        if (IsPathInvalid())
         {
-            if (repathTimer >= repathInterval)
-            {
-                CalculateNewPath();
-            }
+            if (repathTimer >= repathInterval) CalculateNewPath();
             return;
         }
 
@@ -70,147 +98,152 @@ public class Espectro : Enemy
             return;
         }
 
-        Vector3 direction = (targetNode.transform.position - transform.position).normalized;
-        transform.position += direction * speed * Time.deltaTime;
-
-        if (direction != Vector3.zero)
-        {
-            Quaternion lookRotation = Quaternion.LookRotation(direction) * Quaternion.Euler(0, 90, 0);
-            transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 5f);
-        }
+        MoveTowardsTarget(targetNode);
 
         if (Vector3.Distance(transform.position, targetNode.transform.position) < 0.1f)
         {
-            Node previousNode = currentNode;
-            currentNode = targetNode;
-            path.RemoveAt(0);
-
-            // Verificar si estamos saliendo de un nodo objeto hacia un nodo no-objeto
-            if (previousNode != null && previousNode.isObject && 
-                currentNode != null && !currentNode.isObject)
-            {
-                ShowModel(); // Reaparecer al moverse de objeto a no-objeto
-            }
-
-            if (CanPossessCurrentNode())
-            {
-                Possess();
-            }
-            else if (path.Count == 0)
-            {
-                CalculateNewPath();
-            }
+            HandleNodeReached(targetNode);
         }
     }
 
-    private bool CanPossessCurrentNode()
+    private bool IsPathInvalid() => path == null || path.Count == 0;
+
+    private void MoveTowardsTarget(Node targetNode)
     {
-        return currentNode != null && 
-               currentNode.isObject && 
-               player != null &&
-               Vector3.Distance(currentNode.transform.position, player.position) <= possessionRange;
+        Vector3 direction = (targetNode.transform.position - transform.position).normalized;
+        transform.position += direction * (speed * Time.deltaTime);
+
+        if (direction != Vector3.zero)
+        {
+            transform.rotation = Quaternion.Slerp(transform.rotation, 
+                Quaternion.LookRotation(direction) * Quaternion.Euler(0, 90, 0), 
+                Time.deltaTime * 5f);
+        }
     }
+
+    private void HandleNodeReached(Node targetNode)
+    {
+        Node previousNode = currentNode;
+        currentNode = targetNode;
+        path.RemoveAt(0);
+
+        // Salir de posesión al mover de objeto a no-objeto
+        if (previousNode?.isObject == true && currentNode?.isObject == false)
+        {
+            ExitPossessionState();
+        }
+
+        // Poseer si es posible, sino recalcular camino
+        if (CanPossessCurrentNode() && !hasPlayedParticlesThisCycle)
+        {
+            Possess();
+        }
+        else if (path.Count == 0)
+        {
+            CalculateNewPath();
+        }
+    }
+
+    private bool CanPossessCurrentNode() => 
+        currentNode?.isObject == true && 
+        player != null &&
+        Vector3.Distance(currentNode.transform.position, player.position) <= possessionRange;
 
     private void Possess()
     {
-        if (isPossessing || currentNode == null || !currentNode.isObject) return;
+        if (isPossessing || currentNode?.isObject != true) return;
         
         isPossessing = true;
-        lastPossessedNode = currentNode; // Guardar referencia al nodo poseído
+        hasPlayedParticlesThisCycle = true;
 
+        SetCollider(true);
         HideModel();
         PlayPossessionParticles();
+        Invoke(nameof(ExitPossession), possessionDuration);
+    }
 
-        Invoke(nameof(ExitPossession), 3.0f);
+    private void CheckForBetterObject()
+    {
+        if (!isPossessing) return;
+
+        Node betterTarget = FindClosestObjectToPlayer();
+        if (betterTarget != null && betterTarget != currentNode)
+        {
+            CancelInvoke(nameof(ExitPossession));
+            ExitPossession();
+        }
     }
 
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player") && isPossessing)
         {
-            FindAnyObjectByType<GameEnding>().CaughtPlayer();
+            gameEnding?.CaughtPlayer();
         }
     }
     
     private void ExitPossession()
     {
-        StopPossessionParticles();
+        if (!isPossessing) return;
 
-        // NO reaparecer aquí - esperar a moverse al siguiente nodo no-objeto
-        isPossessing = false;
-
-        // Buscar siguiente nodo desde la posición actual
-        currentNode = FindClosestNode(transform.position);
+        CleanupPossession();
+        currentNode = FindClosestNode();
         CalculateNewPath();
+    }
+
+    private void ExitPossessionState()
+    {
+        CleanupPossession();
+        ShowModel();
+    }
+
+    private void CleanupPossession()
+    {
+        StopPossessionParticles();
+        isPossessing = false;
+        hasPlayedParticlesThisCycle = false;
+        SetCollider(false);
+    }
+
+    private void SetCollider(bool enabled)
+    {
+        if (enemyCollider != null) enemyCollider.enabled = enabled;
     }
 
     private void HideModel()
     {
-        // Ocultar renderers
         foreach (var renderer in GetComponentsInChildren<Renderer>())
         {
-            if (renderer != null)
-                renderer.enabled = false;
-        }
-
-        // Desactivar solo colliders que NO sean triggers
-        foreach (var collider in GetComponentsInChildren<Collider>())
-        {
-            if (collider != null && !collider.isTrigger)
-                collider.enabled = false;
+            if (renderer != null) renderer.enabled = false;
         }
     }
 
     private void ShowModel()
     {
-        // Mostrar renderers
         foreach (var renderer in GetComponentsInChildren<Renderer>())
         {
-            if (renderer != null)
-                renderer.enabled = true;
+            if (renderer != null) renderer.enabled = true;
         }
-
-        // Reactivar todos los colliders no-trigger
-        foreach (var collider in GetComponentsInChildren<Collider>())
-        {
-            if (collider != null && !collider.isTrigger)
-                collider.enabled = true;
-        }
-    }
-
-    private void ToggleModelVisibility(bool visible)
-    {
-        if (visible)
-            ShowModel();
-        else
-            HideModel();
     }
 
     private void PlayPossessionParticles()
     {
-        if (currentNode != null)
-        {
-            currentParticleSystem = currentNode.GetComponentInChildren<ParticleSystem>();
-            if (currentParticleSystem != null)
-            {
-                currentParticleSystem.Play();
-            }
-        }
+        currentParticleSystem = currentNode?.GetComponentInChildren<ParticleSystem>();
+        currentParticleSystem?.Play();
     }
 
     private void StopPossessionParticles()
     {
-        if (currentParticleSystem != null)
-        {
-            currentParticleSystem.Stop();
-            currentParticleSystem = null;
-        }
+        currentParticleSystem?.Stop();
+        currentParticleSystem = null;
     }
 
     private void TryRecalculatePath()
     {
+        if (isPossessing) return;
+
         Node newTarget = FindClosestObjectToPlayer();
-        if (newTarget != currentTargetNode || path == null || path.Count == 0)
+        if (newTarget != currentTargetNode || IsPathInvalid())
         {
             CalculateNewPath();
         }
@@ -220,7 +253,7 @@ public class Espectro : Enemy
     {
         if (currentNode == null)
         {
-            currentNode = FindClosestNode(transform.position);
+            currentNode = FindClosestNode();
             if (currentNode == null) return;
         }
 
@@ -233,16 +266,12 @@ public class Espectro : Enemy
         }
 
         currentTargetNode = targetNode;
-        path = AStarSearch(currentNode, targetNode);
-        
-        if (path == null)
-            path = new List<Node>();
+        path = AStarSearch(currentNode, targetNode) ?? new List<Node>();
     }
 
     private List<Node> AStarSearch(Node start, Node goal)
     {
-        if (start == null || goal == null) 
-            return new List<Node>();
+        if (start == null || goal == null) return new List<Node>();
 
         var openSet = new List<Node> { start };
         var closedSet = new HashSet<Node>();
@@ -255,16 +284,14 @@ public class Espectro : Enemy
             Node current = GetLowestFScoreNode(openSet, fScore);
             if (current == null) break;
 
-            if (current == goal)
-                return ReconstructPath(cameFrom, current);
+            if (current == goal) return ReconstructPath(cameFrom, current);
 
             openSet.Remove(current);
             closedSet.Add(current);
 
             foreach (Node neighbor in current.neighbors)
             {
-                if (neighbor == null || closedSet.Contains(neighbor)) 
-                    continue;
+                if (neighbor == null || closedSet.Contains(neighbor)) continue;
 
                 float tentativeG = gScore[current] + CalculateMoveCost(current, neighbor);
 
@@ -274,8 +301,7 @@ public class Espectro : Enemy
                     gScore[neighbor] = tentativeG;
                     fScore[neighbor] = tentativeG + Heuristic(neighbor, goal);
 
-                    if (!openSet.Contains(neighbor))
-                        openSet.Add(neighbor);
+                    if (!openSet.Contains(neighbor)) openSet.Add(neighbor);
                 }
             }
         }
@@ -285,16 +311,13 @@ public class Espectro : Enemy
 
     private Node GetLowestFScoreNode(List<Node> nodes, Dictionary<Node, float> fScore)
     {
-        if (nodes == null || nodes.Count == 0) 
-            return null;
+        if (nodes == null || nodes.Count == 0) return null;
 
         Node lowest = nodes[0];
         foreach (Node node in nodes)
         {
-            if (node != null && 
-                fScore.ContainsKey(node) && 
-                fScore.ContainsKey(lowest) && 
-                fScore[node] < fScore[lowest])
+            if (node != null && fScore.TryGetValue(node, out float nodeScore) && 
+                fScore.TryGetValue(lowest, out float lowestScore) && nodeScore < lowestScore)
             {
                 lowest = node;
             }
@@ -304,39 +327,25 @@ public class Espectro : Enemy
 
     private float CalculateMoveCost(Node from, Node to)
     {
-        if (from == null || to == null) 
-            return float.MaxValue;
+        if (from == null || to == null) return float.MaxValue;
 
         float baseCost = Vector3.Distance(from.transform.position, to.transform.position);
-        
-        if (!to.isObject) 
-            return baseCost;
-        
-        // Penalización mínima para variar rutas
-        return baseCost * 1.1f;
+        return to.isObject ? baseCost * 1.1f : baseCost;
     }
 
-    private float Heuristic(Node a, Node b)
-    {
-        if (a == null || b == null) 
-            return float.MaxValue;
-            
-        return Vector3.Distance(a.transform.position, b.transform.position);
-    }
+    private float Heuristic(Node a, Node b) => 
+        (a == null || b == null) ? float.MaxValue : Vector3.Distance(a.transform.position, b.transform.position);
 
     private Node FindClosestObjectToPlayer()
     {
-        if (player == null) 
-            return null;
+        if (player == null) return null;
 
-        Node[] allNodes = FindObjectsOfType<Node>();
         Node closest = null;
         float minDist = Mathf.Infinity;
 
-        foreach (Node node in allNodes)
+        foreach (Node node in FindObjectsOfType<Node>())
         {
-            if (node == null || !node.isObject) 
-                continue;
+            if (node?.isObject != true) continue;
                 
             float dist = Vector3.Distance(node.transform.position, player.position);
             if (dist < minDist)
@@ -349,13 +358,14 @@ public class Espectro : Enemy
         return closest;
     }
 
-    private Node FindClosestNode(Vector3 position)
+    private Node FindClosestNode(Vector3 position = default)
     {
-        Node[] allNodes = FindObjectsOfType<Node>();
+        if (position == default) position = transform.position;
+
         Node closest = null;
         float minDist = Mathf.Infinity;
 
-        foreach (Node node in allNodes)
+        foreach (Node node in FindObjectsOfType<Node>())
         {
             if (node == null) continue;
             
@@ -374,11 +384,9 @@ public class Espectro : Enemy
     {
         List<Node> totalPath = new List<Node> { current };
         
-        while (cameFrom.ContainsKey(current))
+        while (cameFrom.TryGetValue(current, out current) && current != null)
         {
-            current = cameFrom[current];
-            if (current != null)
-                totalPath.Insert(0, current);
+            totalPath.Insert(0, current);
         }
         
         if (totalPath.Count > 0 && totalPath[0] == currentNode)
@@ -391,18 +399,18 @@ public class Espectro : Enemy
 
     private void ResetPathfinding()
     {
-        if (path != null)
-            path.Clear();
-            
+        path?.Clear();
         currentTargetNode = null;
         
         if (currentNode == null || Vector3.Distance(transform.position, currentNode.transform.position) > 2.0f)
         {
-            currentNode = FindClosestNode(transform.position);
+            currentNode = FindClosestNode();
         }
 
         StopPossessionParticles();
-        ShowModel(); // Asegurar que el modelo sea visible al resetear
+        ShowModel();
+        hasPlayedParticlesThisCycle = false;
+        SetCollider(false);
     }
 
     public void ForceRecalculatePath()
@@ -414,8 +422,7 @@ public class Espectro : Enemy
 
     private void OnDrawGizmos()
     {
-        if (path == null || path.Count == 0) 
-            return;
+        if (path == null || path.Count == 0) return;
 
         Gizmos.color = Color.red;
         for (int i = 0; i < path.Count - 1; i++)
