@@ -20,7 +20,8 @@ MonoBehaviour:
     linkText: Find the tutorial on the Unity Learn site here
     url: https://learn.unity.com/project/john-lemon-s-haunted-jaunt-3d-beginner
   - heading: 
-    text: To follow along with this tutorial, you will need to download these assets.
+    text: To follow along with this tutorial, you will need to download the starter
+      assets.
     linkText: 'Find the Tutorial Resources pack on the Asset Store here:'
     url: http://u3d.as/1vgD
   loadedLayout: 1

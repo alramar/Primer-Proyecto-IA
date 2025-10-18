@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: df9cb6f5182bff940bfd119bc4d395eb
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 143848
+  packageName: 'Unity Learn | 3D Beginner: Tutorial Resources | URP'
+  packageVersion: 3.0
+  assetPath: Assets/_3DStealthGame/Art/Materials/VFX/Skybox.mat
+  uploadId: 680544

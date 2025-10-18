@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 248b5e2a458c26044822f18affd5efa4
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 143848
+  packageName: 'Unity Learn | 3D Beginner: Tutorial Resources | URP'
+  packageVersion: 3.0
+  assetPath: Assets/_3DStealthGame/Prefabs/Environment/Decorations/Diningroom/Chair_1.prefab
+  uploadId: 680544
