@@ -17,7 +17,7 @@ GameObject:
   - component: {fileID: 685090927300085920}
   m_Layer: 0
   m_Name: Demo_Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -126,7 +126,7 @@ MonoBehaviour:
     m_Name: Move
     m_Type: 0
     m_ExpectedControlType: 
-    m_Id: bef014da-3294-4dbf-b103-34cf83ebf167
+    m_Id: 2290f5d3-c503-4d2b-9bf4-8f918d23342b
     m_Processors: 
     m_Interactions: 
     m_SingletonActionBindings:
@@ -211,7 +211,25 @@ MonoBehaviour:
       m_Action: Move
       m_Flags: 8
     m_Flags: 0
-  walkSpeed: 1
+  WalkAction:
+    m_Name: Walk
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: a7311ebb-2a99-4369-9108-849c5096b536
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 001b166e-4ed7-40e8-8a11-f47ee0b9bd9f
+      m_Path: <Keyboard>/shift
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Walk
+      m_Flags: 0
+    m_Flags: 0
+  walkSpeed: 1.5
+  runSpeed: 2
   turnSpeed: 20
 --- !u!82 &355967702596757054
 AudioSource:
@@ -223,7 +241,7 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 07e520bb410492d47bf739846d70f2a3, type: 3}
+  m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 07e520bb410492d47bf739846d70f2a3, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
@@ -234,7 +252,7 @@ AudioSource:
   SpatializePostEffects: 0
   Priority: 128
   DopplerLevel: 1
-  MinDistance: 1
+  MinDistance: 1.0021782
   MaxDistance: 500
   Pan2D: 0
   rolloffMode: 0
