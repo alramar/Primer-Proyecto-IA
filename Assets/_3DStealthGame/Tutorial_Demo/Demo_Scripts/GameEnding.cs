@@ -97,7 +97,7 @@ namespace StealthGame
 
         void Demo_UpdateTimerLabel()
         {
-            m_Demo_GameTimerLabel.text = m_Demo_GameTimer.ToString("0.00");
+            //m_Demo_GameTimerLabel.text = m_Demo_GameTimer.ToString("0.00");
         }
     }
 }

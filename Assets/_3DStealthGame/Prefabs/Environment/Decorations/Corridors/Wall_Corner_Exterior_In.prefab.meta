@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 5bb95bbe94bc3eb4897d4218ec092132
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 143848
+  packageName: 'Unity Learn | 3D Beginner: Tutorial Resources | URP'
+  packageVersion: 3.0
+  assetPath: Assets/_3DStealthGame/Prefabs/Environment/Decorations/Corridors/Wall_Corner_Exterior_In.prefab
+  uploadId: 680544

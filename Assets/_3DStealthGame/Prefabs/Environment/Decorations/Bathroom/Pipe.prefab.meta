@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 78b00994922f28547a21884373939367
+guid: 56702188126f5154ba3e75b53bf5acc1
 PrefabImporter:
   externalObjects: {}
   userData: 
@@ -8,7 +8,7 @@ PrefabImporter:
 AssetOrigin:
   serializedVersion: 1
   productId: 143848
-  packageName: '3D Stealth Game: Haunted House'
-  packageVersion: 3.1
+  packageName: 'Unity Learn | 3D Beginner: Tutorial Resources | URP'
+  packageVersion: 3.0
   assetPath: Assets/_3DStealthGame/Prefabs/Environment/Decorations/Bathroom/Pipe.prefab
-  uploadId: 770342
+  uploadId: 680544

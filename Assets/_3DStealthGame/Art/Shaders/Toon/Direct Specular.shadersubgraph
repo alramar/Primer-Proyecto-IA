@@ -1,7 +1,7 @@
 {
     "m_SGVersion": 3,
     "m_Type": "UnityEditor.ShaderGraph.GraphData",
-    "m_ObjectId": "0b83537fdc8547369b154f1382b400eb",
+    "m_ObjectId": "67c63c69664947e197867e5df123045c",
     "m_Properties": [
         {
             "m_Id": "027da7481278538ebd2e7603a21b88be"
@@ -20,7 +20,7 @@
     "m_Dropdowns": [],
     "m_CategoryData": [
         {
-            "m_Id": "20a756d09df34766bfec17b3a5cc1fb7"
+            "m_Id": "72f818500ef14ec0b9c909c6ff59e30c"
         }
     ],
     "m_Nodes": [
@@ -303,27 +303,6 @@
 
 {
     "m_SGVersion": 0,
-    "m_Type": "UnityEditor.ShaderGraph.CategoryData",
-    "m_ObjectId": "20a756d09df34766bfec17b3a5cc1fb7",
-    "m_Name": "",
-    "m_ChildObjectList": [
-        {
-            "m_Id": "027da7481278538ebd2e7603a21b88be"
-        },
-        {
-            "m_Id": "d7fa2904de23ad8785aebbe744a93a7e"
-        },
-        {
-            "m_Id": "ee677e9756c3a886a9f3159e98189ebd"
-        },
-        {
-            "m_Id": "d2479b6eb97f6b82b5718c6dd1f6da08"
-        }
-    ]
-}
-
-{
-    "m_SGVersion": 0,
     "m_Type": "UnityEditor.ShaderGraph.Vector3MaterialSlot",
     "m_ObjectId": "25701bb628ca258d9d8d3f6ac0de449c",
     "m_Id": 0,
@@ -518,10 +497,10 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": -1054.0,
-            "y": 91.0,
+            "x": -1049.0,
+            "y": 84.0,
             "width": 208.0,
-            "height": 314.0
+            "height": 315.0
         }
     },
     "m_Slots": [
@@ -540,6 +519,27 @@
         "m_SerializableColors": []
     },
     "m_Space": 2
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.CategoryData",
+    "m_ObjectId": "72f818500ef14ec0b9c909c6ff59e30c",
+    "m_Name": "",
+    "m_ChildObjectList": [
+        {
+            "m_Id": "027da7481278538ebd2e7603a21b88be"
+        },
+        {
+            "m_Id": "d7fa2904de23ad8785aebbe744a93a7e"
+        },
+        {
+            "m_Id": "ee677e9756c3a886a9f3159e98189ebd"
+        },
+        {
+            "m_Id": "d2479b6eb97f6b82b5718c6dd1f6da08"
+        }
+    ]
 }
 
 {

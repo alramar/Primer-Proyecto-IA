@@ -1,5 +1,8 @@
+using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
+using GameEnding = StealthGame.GameEnding;
 
 public class Espectro : Enemy
 {
@@ -16,20 +19,20 @@ public class Espectro : Enemy
     private bool isPossessing = false;
     private ParticleSystem currentParticleSystem;
     private Node lastPossessedNode; // Track del último nodo objeto poseído
-
     public new void Start()
     {
+        GetComponent<CapsuleCollider>().radius = detection_range;
         base.Start();
         path = new List<Node>();
         currentNode = startNode != null ? startNode : FindClosestNode(transform.position);
-        
+
         if (currentNode == null)
         {
             Debug.LogError("Espectro: No se pudo encontrar nodo inicial");
             enabled = false;
             return;
         }
-        
+
         CalculateNewPath();
     }
 
@@ -121,13 +124,21 @@ public class Espectro : Enemy
         Invoke(nameof(ExitPossession), 3.0f);
     }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Player") && isPossessing)
+        {
+            FindAnyObjectByType<GameEnding>().CaughtPlayer();
+        }
+    }
+    
     private void ExitPossession()
     {
         StopPossessionParticles();
-        
+
         // NO reaparecer aquí - esperar a moverse al siguiente nodo no-objeto
         isPossessing = false;
-        
+
         // Buscar siguiente nodo desde la posición actual
         currentNode = FindClosestNode(transform.position);
         CalculateNewPath();
@@ -135,30 +146,34 @@ public class Espectro : Enemy
 
     private void HideModel()
     {
+        // Ocultar renderers
         foreach (var renderer in GetComponentsInChildren<Renderer>())
         {
             if (renderer != null)
                 renderer.enabled = false;
         }
 
+        // Desactivar solo colliders que NO sean triggers
         foreach (var collider in GetComponentsInChildren<Collider>())
         {
-            if (collider != null)
+            if (collider != null && !collider.isTrigger)
                 collider.enabled = false;
         }
     }
 
     private void ShowModel()
     {
+        // Mostrar renderers
         foreach (var renderer in GetComponentsInChildren<Renderer>())
         {
             if (renderer != null)
                 renderer.enabled = true;
         }
 
+        // Reactivar todos los colliders no-trigger
         foreach (var collider in GetComponentsInChildren<Collider>())
         {
-            if (collider != null)
+            if (collider != null && !collider.isTrigger)
                 collider.enabled = true;
         }
     }
