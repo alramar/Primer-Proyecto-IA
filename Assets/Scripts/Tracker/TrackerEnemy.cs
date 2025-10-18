@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Assets.Scripts.Algorithms;
+using StealthGame;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -12,10 +14,13 @@ using Random = UnityEngine.Random;
 [RequireComponent(typeof(GameObject))]
 public class TrackerEnemy : Enemy
 {
+    public EnemyStateMachine stateMachine;
     Vector3 steer;
     Vector3 acceleration;
-    Rigidbody rb;
-    PlayerMovement target;
+    public Rigidbody rb;
+    public PlayerMovement target;
+    [SerializeField] private PlayerMovement playerRef;
+
     [Header("Wander Options")]
     [SerializeField]
     float wanderAngle = 0;
@@ -29,9 +34,9 @@ public class TrackerEnemy : Enemy
     float nextWanderTemp;
 
     [Header("Pursuit settings")]
-    float pursuitTimer = 0;
+    public float pursuitTimer = 0f;
     [SerializeField]
-    float pursuitTime;
+    public float pursuitTime;
 
     [Header("Path Settings")]
     List<Node> path;
@@ -39,7 +44,7 @@ public class TrackerEnemy : Enemy
     Node lastPathNodeVisited;
     Node currentPathObjective;
     Node nextPathObjective;
-    bool objectiveReached = true;
+    public bool objectiveReached = true;
     bool isFar = true;
     [SerializeField]
     float farAwayPatrolRadius = 0;
@@ -51,7 +56,7 @@ public class TrackerEnemy : Enemy
     [SerializeField]
     Graph graph;
     [SerializeField]
-    float pathRadius;
+    public float pathRadius;
     Vector3 targetPoint;
     Vector3 normalPoint;
     Vector3 future;
@@ -69,67 +74,256 @@ public class TrackerEnemy : Enemy
     bool jobScheduled = false;
     [SerializeField]
     Transform eyeHeight;
+    [SerializeField]
+    public PlayerTracks playerTracks;
+    public bool isFollowingTracks = false;
+    List<GameObject> trackPath;
+    GameObject currentTrackPathObject;
+    int currentTrackPathIndex = 0;
+    [HideInInspector] public Vector3 lastKnownTargetPosition;
+
+
+
+    public Queue<GameObject> trackQueue = new Queue<GameObject>();
+    private GameObject currentTrackTarget;
+    public float rotationSpeed = 5f;
+
+
 
     void Awake()
     {
+        stateMachine = new();
         rb = GetComponent<Rigidbody>();
         animator = GetComponent<Animator>();
         visitedNodes = new();
+
+    }
+
+    new void Start()
+    {
+        stateMachine.Initialize(new PatrolState(), this);
         SetUpVisionRayCasts();
+        if (playerRef == null)
+        {
+            var go = GameObject.FindWithTag("Player");
+            if (go != null) playerRef = go.GetComponent<PlayerMovement>();
+            if (playerRef == null)
+                Debug.LogWarning("[TrackerEnemy] No se ha asignado playerRef y no se encontró un GameObject con Tag 'Player' con PlayerMovement.");
+        }
 
     }
 
     void FixedUpdate()
     {
         PrepareRayCasts();
-        Patrol();
+        stateMachine.Update(this);
         Move();
+        // string x = "NAH";
+        // if (target != null) x = target.name; 
+        // Debug.Log("ayudaa " + x);
+        // PrepareRayCasts();
+        // // if (target == null && isFollowingTracks)
+        // // {
+        // //     Debug.Log("FOLLOWING TRACKSSS");
+        // //     FollowPlayerTracks();
+        // // }
+        // // else 
+        // if (target != null)
+        // {
+        //     Debug.Log("FOLLOWING YOUUUU");
+        //     Pursuit();
+        //     pursuitTimer += Time.fixedDeltaTime;
+        //     if (pursuitTimer >= pursuitTime)
+        //     {
+        //         target = null;
+        //         pursuitTimer = 0;
+        //     }
+        //     Move();
+        // }
+        // // else
+        // // {
+        // //     Debug.Log("Patrochilling");
+        // //     Patrol();
+        // // }
+
     }
 
     void LateUpdate()
     {
+        HandleVision();
+    }
+
+    public void FollowPlayerTracks()
+    {
+        // Si no hay rastros, terminamos
+        if (playerTracks == null || playerTracks.playerTracksGONodes.Count == 0)
+        {
+            isFollowingTracks = false;
+            return;
+        }
+
+        // Si la cola está vacía o desactualizada, la refrescamos
+        if (trackQueue.Count == 0 || trackQueue.LastOrDefault() != playerTracks.playerTracksGONodes.LastOrDefault())
+        {
+            trackQueue = new Queue<GameObject>(playerTracks.playerTracksGONodes);
+        }
+
+        // Si no hay target actual, tomar el primero
+        if (currentTrackTarget == null && trackQueue.Count > 0)
+        {
+            currentTrackTarget = trackQueue.Peek();
+        }
+
+        if (currentTrackTarget == null) return;
+
+        Vector3 targetPos = currentTrackTarget.transform.position;
+        Seek(targetPos); // usamos tu versión original de Seek()
+
+        float dist = Vector3.Distance(transform.position, targetPos);
+        if (dist <= 1.2f)
+        {
+            // Pasar al siguiente nodo
+            trackQueue.Dequeue();
+            currentTrackTarget = trackQueue.Count > 0 ? trackQueue.Peek() : null;
+        }
+
+        // Si se acaban los nodos
+        if (trackQueue.Count == 0)
+            isFollowingTracks = false;
+    }
+
+    public void Pursuit()
+    {
+        Vector3 pursuitTargetPos;
+
+        if (target != null)
+        {
+            // Se ve al jugador
+            lastKnownTargetPosition = target.transform.position;
+            pursuitTargetPos = lastKnownTargetPosition;
+        }
+        else
+        {
+            // No se ve, ir hacia la última posición conocida
+            pursuitTargetPos = lastKnownTargetPosition;
+        }
+
+        //TODO
+        //TODO
+        //TODOOOO hacer que algo similar a patrol para seguir el path hasta el nodo más cercano al jugador en todo momento.
+        List<Node> ap = graph.TryPathing(transform, target.transform);
+
+        if (ap == null || ap.Count < 2) return;
+        targetPoint = Vector3.zero;
+        float lookAhead = Math.Clamp(rb.linearVelocity.magnitude, 0.5f, 1f);
+        future = transform.position + rb.linearVelocity.normalized * lookAhead;
+        Vector3 a = ap[currentPathIndex].transform.position;
+        Vector3 b = ap[currentPathIndex + 1].transform.position;
+        float t;
+        normalPoint = GetNormalPoint(future, a, b, out t);
+
+        if (t >= 1f)
+        {
+            if (currentPathIndex < ap.Count - 2)
+            {
+                currentPathIndex++;
+            }
+            else
+            {
+                objectiveReached = true;
+                isFar = !isFar;
+                currentPathIndex = 0;
+            }
+        }
+        Vector3 direction = (b - a).normalized;
+        targetPoint = normalPoint + direction * lookAhead;
+        FollowPath();
+
+        Seek(pursuitTargetPos); // usa el Seek ya existente
+    }
+
+    void HandleVision()
+    {
         if (!jobScheduled) return;
 
-        // Asegurarse de que el job terminó antes de acceder a resultados
+        // Aseguramos que los rayos hayan terminado de procesarse
         raycastJobHandle.Complete();
+        jobScheduled = false;
 
-        // Procesar resultados
+        bool playerSeen = false;
+        bool trackSeen = false;
+
         foreach (RaycastHit hit in results)
         {
-            if (hit.collider != null)
+            if (hit.collider == null) continue;
+
+            // --- Detectar al jugador ---
+            if (hit.collider.CompareTag("Player"))
             {
-                if (hit.collider.CompareTag("Player"))
+                if (playerRef != null)
                 {
-                    hit.collider.TryGetComponent(out target);
-                    pursuitTimer = 0;
+                    playerSeen = true;
+                    target = playerRef;
+                    pursuitTimer = 0f;
+                    lastKnownTargetPosition = playerRef.transform.position;
                 }
                 else
                 {
-                    Seek(transform.position + hit.normal * 3);
+                    // fallback: intentar GetComponentInParent o attachedRigidbody
+                    PlayerMovement pm = hit.collider.GetComponentInParent<PlayerMovement>()
+                                      ?? hit.collider.attachedRigidbody?.GetComponent<PlayerMovement>();
+                    if (pm != null)
+                    {
+                        playerSeen = true;
+                        target = pm;
+                        pursuitTimer = 0f;
+                        lastKnownTargetPosition = pm.transform.position;
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[TrackerEnemy] Collider golpeado tiene Tag 'Player' pero no se pudo obtener PlayerMovement desde el collider.");
+                    }
                 }
             }
 
+            // --- Detectar rastros del jugador ---
+            else if (hit.collider.GetComponentInParent<PlayerNode>() != null)
+            {
+                trackSeen = true;
+            }
         }
 
-        jobScheduled = false; // listo para el próximo frame
+        if (playerSeen)
+        {
+            if (stateMachine.currentState is not PursuitState)
+                stateMachine.ChangeState(new PursuitState(), this);
+        }
+        else if (trackSeen)
+        {
+            if (stateMachine.currentState is not FollowTracksState)
+                stateMachine.ChangeState(new FollowTracksState(), this);
+        }
     }
 
-    void Patrol()
+
+    public void Patrol()
     {
         if (objectiveReached)
         {
             path = new();
-            while(path.Count == 0)
+            currentPathIndex = 0;
+            while (path.Count == 0)
             {
                 if (isFar)
                 {
-                    nextPathObjective = graph.GetFurthestNodeInRadius(lastPathNodeVisited != null? lastPathNodeVisited.transform : transform, farAwayPatrolRadius, visitedNodes);
+                    nextPathObjective = graph.GetFurthestNodeInRadius(lastPathNodeVisited != null ? lastPathNodeVisited.transform : transform, farAwayPatrolRadius, visitedNodes);
                 }
                 else
                 {
-                    nextPathObjective = graph.GetFurthestNodeInRadius(lastPathNodeVisited != null? lastPathNodeVisited.transform : transform, nearbyPatrolRadius, visitedNodes);
+                    nextPathObjective = graph.GetFurthestNodeInRadius(lastPathNodeVisited != null ? lastPathNodeVisited.transform : transform, nearbyPatrolRadius, visitedNodes);
                 }
-                if(currentPathObjective){
+                if (currentPathObjective)
+                {
                     visitedNodes.Add(currentPathObjective);
                     lastPathNodeVisited = currentPathObjective;
 
@@ -137,14 +331,12 @@ public class TrackerEnemy : Enemy
                 currentPathObjective = nextPathObjective;
                 objectiveReached = false;
                 path = graph.TryPathing(transform, currentPathObjective);
-                Debug.Log(path.Count);
-                
+                //Debug.Log(path.Count);
+
             }
         }
         else
         {
-            //CalculateFollowPath();
-
             FollowAStarPath();
         }
 
@@ -152,7 +344,7 @@ public class TrackerEnemy : Enemy
     }
 
 
-    void Seek(Vector3 target)
+    public void Seek(Vector3 target)
     {
         Vector3 desired = target - transform.position;
         desired = desired.normalized * speed;
@@ -161,8 +353,9 @@ public class TrackerEnemy : Enemy
     }
 
 
-    void Pursuit()
+    public void Pursuit_OLD()
     {
+        if (target == null) return;
         Vector3 prediction = target.transform.position + target.velocity * 10;
         Seek(prediction);
     }
@@ -240,7 +433,7 @@ public class TrackerEnemy : Enemy
     }
 
 
-    void Wander()
+    public void Wander()
     {
         wanderCirclePosition = transform.position + 1 * rb.linearVelocity;
         wanderAngle += Random.value * 0.5f - 0.25f;
@@ -248,85 +441,39 @@ public class TrackerEnemy : Enemy
         Seek(wanderPoint);
     }
 
-    void Move()
+    public void Move()
     {
-        if(Vector3.Angle(transform.forward, rb.linearVelocity) > 0.1f){
+        if (Vector3.Angle(transform.forward, rb.linearVelocity) > 0.1f)
+        {
             transform.forward = Vector3.RotateTowards(transform.forward, rb.linearVelocity, rotation_speed, maxForce);
         }
 
         rb.AddForce(steer, ForceMode.Acceleration);
     }
 
-    // void FollowPath()
-    // {
-    //     targetPoint = Vector3.zero;
-    //     float bestDistance = float.PositiveInfinity;
-    //     Vector3 future = transform.position;
-    //     int n = path.Length - 1;
-    //     //for (int i = n; i < 2 * n; i++)
-    //     for (int i = 0; i < n; i++)
-    //     {
-    //         // int current_index = math.abs(i - n);
-    //         // int next_index = math.abs((i + 1) % (2 * n) - n);
-    //         int current_index = 1;
-    //         int next_index = i + 1;
-    //         Vector3 a = path[current_index];
-    //         Vector3 b = path[next_index];
-    //         Vector3 possibleNormalPoint = GetNormalPoint(future, a, b);
-    //         Vector3 direccion = b - a;
-    //         if (possibleNormalPoint.x < math.min(a.x, b.x) ||
-    //             possibleNormalPoint.x > math.max(a.x, b.x) ||
-    //             possibleNormalPoint.y < math.min(a.y, b.y) ||
-    //             possibleNormalPoint.y > math.max(a.y, b.y))
-    //         {
-    //             possibleNormalPoint = b;
-    //             // If we're at the end we really want the next line segment for looking ahead
-    //             a = path[next_index];
-    //             b = path[next_index]; // Path wraps around
-    //             direccion = b - a;
-    //         }
-    //         float distance = Vector3.Distance(possibleNormalPoint, future);
-    //         //Debug.Log(distance);
-    //         if (distance < bestDistance)
-    //         {
-    //             bestDistance = distance;
-    //             normalPoint = possibleNormalPoint;
-    //             direccion = (b - a).normalized;
 
-    //             // Aquí decides cuánto "mirar hacia adelante"
-    //             float lookAhead = 1.5f; // ajusta según velocidad
-
-    //             // El target real estará más adelante
-    //             targetPoint = normalPoint + direccion * lookAhead;
-    //         }
-    //     }
-    //     //Debug.Log("Best: " + bestDistance);
-    //     if (bestDistance > pathRadius && targetPoint != Vector3.zero)
-    //     {
-    //         Debug.Log("target: " + targetPoint);
-    //         Seek(targetPoint);
-    //     }
-    //     //else if (rb.linearVelocity.sqrMagnitude <= 0.1) rb.linearVelocity = transform.forward * speed;
-    // }
-    void SetUpVisionRayCasts()
+    public void SetUpVisionRayCasts()
     {
         results = new NativeArray<RaycastHit>(5, Allocator.Persistent);
         commands = new NativeArray<RaycastCommand>(5, Allocator.Persistent);
         queryParameters = new QueryParameters(layerMask, false, QueryTriggerInteraction.Collide);
     }
 
-    void PrepareRayCasts()
+    public void PrepareRayCasts()
     {
         for (int i = 1; i <= commands.Length; i++)
         {
             Vector3 direction = Quaternion.AngleAxis(degreeRotationRange / commands.Length * i - degreeRotationRange * 0.5f, Vector3.up) * transform.forward;
+            direction = Quaternion.AngleAxis(5, Vector3.right) * direction;
 
             commands[i - 1] = new RaycastCommand(eyeHeight.position, direction, queryParameters, rayDistance);
 
         }
+        raycastJobHandle = RaycastCommand.ScheduleBatch(commands, results, 1, 1);
+        jobScheduled = true;
     }
 
-    void CalculateFollowPath()
+    public void CalculateFollowPath()
     {
         if (path == null || path.Count < 2) return;
         targetPoint = Vector3.zero;
@@ -371,7 +518,7 @@ public class TrackerEnemy : Enemy
         FollowPath();
     }
 
-    void FollowAStarPath()
+    public void FollowAStarPath()
     {
         if (path == null || path.Count < 2) return;
         targetPoint = Vector3.zero;
@@ -400,7 +547,8 @@ public class TrackerEnemy : Enemy
         FollowPath();
 
     }
-    void FollowPath()
+
+    public void FollowPath()
     {
         // Solo seguir si estamos fuera del radio
         float dist = Vector3.Distance(future, normalPoint);
@@ -409,8 +557,48 @@ public class TrackerEnemy : Enemy
 
     }
 
+    public void FollowPlayerTracks_OLD()
+    {
+        trackPath = playerTracks.playerTracksGONodes.ToList();
+        currentPathIndex = trackPath.IndexOf(currentTrackPathObject);
+        if (trackPath == null || trackPath.Count < 2 || trackPath[currentTrackPathIndex + 1] == null)
+        {
+            isFollowingTracks = false;
+            return;
+        }
+        ;
+        targetPoint = Vector3.zero;
+        float lookAhead = Math.Clamp(rb.linearVelocity.magnitude, 0.5f, 1f);
+        future = transform.position + rb.linearVelocity.normalized * lookAhead;
+        Vector3 a = trackPath[currentTrackPathIndex].transform.position;
+        Vector3 b = trackPath[currentTrackPathIndex + 1].transform.position;
+        float t;
+        normalPoint = GetNormalPoint(future, a, b, out t);
 
-    Vector3 GetNormalPoint(Vector3 future, Vector3 start, Vector3 finish, out float t)
+        if (t >= 1f)
+        {
+            if (currentTrackPathIndex < trackPath.Count - 2)
+            {
+                currentTrackPathIndex++;
+                currentTrackPathObject = trackPath[currentTrackPathIndex];
+            }
+            else
+            {
+                currentPathIndex = 0;
+                currentTrackPathObject = null;
+                trackPath = null;
+                isFollowingTracks = false;
+                target = playerTracks.player.GetComponent<PlayerMovement>();
+            }
+        }
+        Vector3 direction = (b - a).normalized;
+        targetPoint = normalPoint + direction * lookAhead;
+        FollowPath();
+
+    }
+
+
+    public Vector3 GetNormalPoint(Vector3 future, Vector3 start, Vector3 finish, out float t)
     {
         // Vector3 iniSeccionAfuture = future - start;
         // Vector3 proyeccion = finish - start;

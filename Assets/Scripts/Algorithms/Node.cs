@@ -1,9 +1,5 @@
 using UnityEngine;
-using Assets.Scripts.Algorithms;
 using System.Collections.Generic;
-using System.Collections;
-using Unity.Collections;
-using Unity.VisualScripting;
 namespace Assets.Scripts.Algorithms
 {
     [RequireComponent(typeof(SphereCollider))]

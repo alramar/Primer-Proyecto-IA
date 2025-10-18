@@ -93,7 +93,7 @@ namespace Assets.Scripts.Algorithms
             {
                 Node aux = nodeGO.GetComponent<Node>();
                 float distance = Vector3.Distance(nodeGO.transform.position, startObject.position);
-                Debug.Log("minDist: " + minDistance + " vs dist: " + distance);
+                //Debug.Log("minDist: " + minDistance + " vs dist: " + distance);
                 if (minDistance >= distance )//&& !excludedNodes.Contains(aux))
                 {
                     minDistance = distance;
