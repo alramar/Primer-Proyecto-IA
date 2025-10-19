@@ -4,10 +4,10 @@ namespace Assets.Scripts.Algorithms
 {
     [RequireComponent(typeof(SphereCollider))]
 
-    public class Node : MonoBehaviour
+    public class GenericNode : MonoBehaviour
     {
         [SerializeField]
-        public List<Node> neighbours;
+        public List<GenericNode> neighbours;
         Collider collider;
 
         // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -24,9 +24,9 @@ namespace Assets.Scripts.Algorithms
 
         void OnTriggerEnter(Collider other)
         {
-            Debug.Log(other.name + " entered " + name);
+            //Debug.Log(other.name + " entered " + name);
         }
-        public float Cost(Node neighbour)
+        public float Cost(GenericNode neighbour)
         {
             if (neighbours.Contains(neighbour)) //Checks if it's a neighbour 
             { 

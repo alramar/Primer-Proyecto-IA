@@ -11,24 +11,28 @@ public class PlayerTracks : MonoBehaviour
     GameObject nodePrefab;
     GameObject latestPlayerNode;
     public Queue<GameObject> playerTracksGONodes;
+    public float distanceBetweenNodes = 2f;
+    public int maxNumberOfTrails = 5;
     [SerializeField]
     public GameObject player;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         playerTracksGONodes = new();
-        latestPlayerNode = Instantiate(nodePrefab, player.transform.position + new Vector3(0,transform.position.y,0), Quaternion.identity, transform);
+        latestPlayerNode = Instantiate(nodePrefab, player.transform.position + new Vector3(0, transform.position.y, 0), player.transform.rotation * Quaternion.AngleAxis(90,Vector3.up), transform);
+        latestPlayerNode.transform.GetChild(0).transform.position -= new Vector3(0,transform.position.y,0)*0.85f;
         playerTracksGONodes.Enqueue(latestPlayerNode);
     }
 
     // Update is called once per frame
     void FixedUpdate()
     {
-        if (Vector3.Distance(latestPlayerNode.transform.position, player.transform.position) >= 2f)
+        if (Vector3.Distance(latestPlayerNode.transform.position, player.transform.position) >= distanceBetweenNodes)
         {
-            latestPlayerNode = Instantiate(nodePrefab, player.transform.position + new Vector3(0,transform.position.y,0), Quaternion.identity, transform);
+            latestPlayerNode = Instantiate(nodePrefab, player.transform.position + new Vector3(0, transform.position.y, 0), player.transform.rotation * Quaternion.AngleAxis(90,Vector3.up), transform);
+            latestPlayerNode.transform.GetChild(0).transform.position -= new Vector3(0,transform.position.y,0)*0.85f;
             playerTracksGONodes.Enqueue(latestPlayerNode);
-            if (playerTracksGONodes.Count >= 5)
+            if (playerTracksGONodes.Count >= maxNumberOfTrails)
             {
                 GameObject aux = playerTracksGONodes.Dequeue();
                 Destroy(aux);

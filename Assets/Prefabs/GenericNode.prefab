@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 7082136956324053858}
   - component: {fileID: 2162864216415457366}
   m_Layer: 10
-  m_Name: Node
+  m_Name: GenericNode
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -50,7 +50,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8371781894913753597}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1

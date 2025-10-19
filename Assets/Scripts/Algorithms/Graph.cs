@@ -13,8 +13,8 @@ namespace Assets.Scripts.Algorithms
         List<Transform> mapPlanes;
         [SerializeField]
         GameObject NodePrefab;
-        Dictionary<Node, Node> res;
-        List<Node> solution;
+        Dictionary<GenericNode, GenericNode> res;
+        List<GenericNode> solution;
         [SerializeField]
         float scaleDivider = 0.5f;
         [SerializeField]
@@ -40,75 +40,75 @@ namespace Assets.Scripts.Algorithms
 
         }
 
-        public List<Node> TryPathing(Transform startObject, Transform goalObject)
+        public List<GenericNode> TryPathing(Transform startObject, Transform goalObject)
         {
-            Dictionary<Node, Node> comeFrom = new();
-            Dictionary<Node, float> costSoFar = new();
-            Node start = GetClosestNode(startObject);
-            Node goal = GetClosestNode(goalObject);
+            Dictionary<GenericNode, GenericNode> comeFrom = new();
+            Dictionary<GenericNode, float> costSoFar = new();
+            GenericNode start = GetClosestNode(startObject);
+            GenericNode goal = GetClosestNode(goalObject);
             res = new();
             res = AStar.BreadthFirstSearch(start, goal, comeFrom, costSoFar);
             solution = AStar.ReconstructPath(start, goal, res);
             return solution;
         }
 
-        public List<Node> TryPathing(Transform startObject, Node goalNode)
+        public List<GenericNode> TryPathing(Transform startObject, GenericNode goalNode)
         {
-            Dictionary<Node, Node> comeFrom = new();
-            Dictionary<Node, float> costSoFar = new();
-            Node start = GetClosestNode(startObject);
+            Dictionary<GenericNode, GenericNode> comeFrom = new();
+            Dictionary<GenericNode, float> costSoFar = new();
+            GenericNode start = GetClosestNode(startObject);
             res = new();
             res = AStar.BreadthFirstSearch(start, goalNode, comeFrom, costSoFar);
             solution = AStar.ReconstructPath(start, goalNode, res);
             return solution;
         }
 
-        public List<Node> TryPathing(Node startNode, Transform goalObject)
+        public List<GenericNode> TryPathing(GenericNode startNode, Transform goalObject)
         {
-            Dictionary<Node, Node> comeFrom = new();
-            Dictionary<Node, float> costSoFar = new();
-            Node goal = GetClosestNode(goalObject);
+            Dictionary<GenericNode, GenericNode> comeFrom = new();
+            Dictionary<GenericNode, float> costSoFar = new();
+            GenericNode goal = GetClosestNode(goalObject);
             res = new();
             res = AStar.BreadthFirstSearch(startNode, goal, comeFrom, costSoFar);
             solution = AStar.ReconstructPath(startNode, goal, res);
             return solution;
         }
 
-        public List<Node> TryPathing(Node startNode, Node goalNode)
+        public List<GenericNode> TryPathing(GenericNode startNode, GenericNode goalNode)
         {
-            Dictionary<Node, Node> comeFrom = new();
-            Dictionary<Node, float> costSoFar = new();
+            Dictionary<GenericNode, GenericNode> comeFrom = new();
+            Dictionary<GenericNode, float> costSoFar = new();
             res = new();
             res = AStar.BreadthFirstSearch(startNode, goalNode, comeFrom, costSoFar);
             solution = AStar.ReconstructPath(startNode, goalNode, res);
             return solution;
         }
 
-        public Node GetClosestNode(Transform startObject, List<Node> excludedNodes = null)
+        public GenericNode GetClosestNode(Transform startObject, List<GenericNode> excludedNodes = null)
         {
             excludedNodes ??= new();
             float minDistance = Vector3.Distance(generatedGONodes[0].transform.position, startObject.position);
-            Node selection = generatedGONodes[0].GetComponent<Node>();
+            GenericNode selection = generatedGONodes[0].GetComponent<GenericNode>();
             foreach (GameObject nodeGO in generatedGONodes)
             {
-                Node aux = nodeGO.GetComponent<Node>();
+                GenericNode aux = nodeGO.GetComponent<GenericNode>();
                 float distance = Vector3.Distance(nodeGO.transform.position, startObject.position);
                 //Debug.Log("minDist: " + minDistance + " vs dist: " + distance);
                 if (minDistance >= distance )//&& !excludedNodes.Contains(aux))
                 {
                     minDistance = distance;
-                    selection = nodeGO.GetComponent<Node>();
+                    selection = nodeGO.GetComponent<GenericNode>();
                 }
             }
             return selection;
         }
 
-        public Node GetFirstNodeInRadius(Transform startObject, float radius, List<Node> excludedNodes = null)
+        public GenericNode GetFirstNodeInRadius(Transform startObject, float radius, List<GenericNode> excludedNodes = null)
         {
             excludedNodes ??= new();
             foreach (GameObject nodeGO in generatedGONodes)
             {
-                Node aux = nodeGO.GetComponent<Node>();
+                GenericNode aux = nodeGO.GetComponent<GenericNode>();
                 float distance = Vector3.Distance(nodeGO.transform.position, startObject.position);
                 if (radius >= distance )//&& !excludedNodes.Contains(aux))
                 {
@@ -119,7 +119,7 @@ namespace Assets.Scripts.Algorithms
             return null;
         }
 
-        public Node GetANodeInRadius(Transform startObject, float radius, List<Node> excludedNodes = null)
+        public GenericNode GetANodeInRadius(Transform startObject, float radius, List<GenericNode> excludedNodes = null)
         {
             excludedNodes ??= new();
             float i = 1f;
@@ -127,7 +127,7 @@ namespace Assets.Scripts.Algorithms
             float random;
             foreach (GameObject nodeGO in generatedGONodes)
             {
-                Node aux = nodeGO.GetComponent<Node>();
+                GenericNode aux = nodeGO.GetComponent<GenericNode>();
                 random = Random.Range(0f, 1f);
                 float distance = Vector3.Distance(nodeGO.transform.position, startObject.position);
                 float ratio = distance / radius;
@@ -145,7 +145,7 @@ namespace Assets.Scripts.Algorithms
         }
 
 
-        public Node GetANodeInRange(Transform startObject, float minRadius, float maxRadius, List<Node> excludedNodes = null)
+        public GenericNode GetANodeInRange(Transform startObject, float minRadius, float maxRadius, List<GenericNode> excludedNodes = null)
         {
             excludedNodes ??= new();
 
@@ -154,7 +154,7 @@ namespace Assets.Scripts.Algorithms
             float random;
             foreach (GameObject nodeGO in generatedGONodes)
             {
-                Node aux = nodeGO.GetComponent<Node>();
+                GenericNode aux = nodeGO.GetComponent<GenericNode>();
                 random = Random.Range(0f, 1f);
                 float distance = Vector3.Distance(nodeGO.transform.position, startObject.position);
                 if (maxRadius >= distance && minRadius <= distance && random < probability )//&& !excludedNodes.Contains(aux))
@@ -168,15 +168,15 @@ namespace Assets.Scripts.Algorithms
             return null;
         }
 
-        public Node GetFurthestNodeInRadius(Transform startObject, float radius, List<Node> excludedNodes = null)
+        public GenericNode GetFurthestNodeInRadius(Transform startObject, float radius, List<GenericNode> excludedNodes = null)
         {
             excludedNodes ??= new();
 
-            Node maximumNode = null;
+            GenericNode maximumNode = null;
             float maxDistance = 0f;
             foreach (GameObject nodeGO in generatedGONodes)
             {
-                Node aux = nodeGO.GetComponent<Node>();
+                GenericNode aux = nodeGO.GetComponent<GenericNode>();
                 float distance = Vector3.Distance(startObject.position, nodeGO.transform.position);
                 if (maxDistance < distance && radius >= distance)//&& !excludedNodes.Contains(aux))
                 {
@@ -192,7 +192,7 @@ namespace Assets.Scripts.Algorithms
         {
             if (!res.IsUnityNull())
             {
-                foreach (KeyValuePair<Node, Node> pair in res)
+                foreach (KeyValuePair<GenericNode, GenericNode> pair in res)
                 {
                     Gizmos.DrawLine(pair.Key.transform.position, pair.Value.transform.position);
                 }
@@ -200,7 +200,7 @@ namespace Assets.Scripts.Algorithms
             if (!solution.IsUnityNull())
             {
                 Gizmos.color = Color.green;
-                foreach (Node node in solution)
+                foreach (GenericNode node in solution)
                 {
                     Gizmos.DrawWireCube(node.transform.position, Vector3.one);
                 }
@@ -293,7 +293,7 @@ namespace Assets.Scripts.Algorithms
             List<GameObject> visitedNodes = new();
             foreach (GameObject node in generatedGONodes)
             {
-                Node aux = node.GetComponent<Node>();
+                GenericNode aux = node.GetComponent<GenericNode>();
                 foreach (GameObject nodeOther in generatedGONodes)
                 {
                     Vector3 a = node.transform.position;
@@ -306,7 +306,7 @@ namespace Assets.Scripts.Algorithms
                         {
                             //if (!visitedNodes.Contains(nodeOther))
                             //{F "+hit.col
-                            Node correct = null;
+                            GenericNode correct = null;
                             if (hit.collider == null || hit.collider.TryGetComponent(out correct))
                             {
                                 aux.neighbours.Add(correct);

@@ -1,6 +1,10 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
+using StealthGame;
+using Assets.Scripts.Algorithms;
+using System;
 
 /// <summary>
 /// Estado que hace que el enemigo siga los rastros del jugador.
@@ -9,31 +13,45 @@ using System.Linq;
 public class FollowTracksState : IEnemyState
 {
     private List<GameObject> trackPath;
-    private int currentTrackPathIndex;
+    GameObject currentPathObject;
     private bool initialized;
+    private Queue<GameObject> trackQueue = new();
+    private GameObject currentTrackTarget;
+    private TrackerEnemy enemy;
+    private int currentPathIndex;
+    private Vector3 future;
+    private Vector3 targetPoint;
+    private Vector3 normalPoint;
 
     public void Enter(TrackerEnemy enemy)
     {
         initialized = false;
-
+        this.enemy = enemy;
         // Copiamos los nodos actuales del rastro del jugador
         trackPath = enemy.playerTracks.playerTracksGONodes?.ToList();
 
         if (trackPath == null || trackPath.Count < 2)
         {
-            ResetToPatrol(enemy, "No hay suficientes nodos para seguir el rastro.");
+            enemy.stateMachine.ChangeState(new PatrolState(), enemy);
+            enemy.target = enemy.playerTracks.player.GetComponent<PlayerMovement>();
             return;
         }
 
-        currentTrackPathIndex = 0;
+        currentPathIndex = 0;
+        currentPathObject = trackPath[currentPathIndex];
         initialized = true;
         enemy.isFollowingTracks = true;
 
-        Debug.Log($"[FollowTracksState] Entra al estado. Nodos en el rastro: {trackPath.Count}");
+        Debug.Log($"[FSM] Entra al estado FollowTracksState. Nodos en el rastro: {trackPath.Count}");
     }
 
     public void Update(TrackerEnemy enemy)
     {
+        if(enemy.target != null)
+        {
+            enemy.stateMachine.ChangeState(new PursuitState(), enemy);
+            return;
+        }
         // Si por algún motivo no hay datos válidos, volvemos a patrullar
         if (!initialized || trackPath == null || trackPath.Count < 2)
         {
@@ -42,63 +60,62 @@ public class FollowTracksState : IEnemyState
         }
 
         // Validar que los nodos actuales y siguientes existen (no destruidos)
-        if (trackPath[currentTrackPathIndex] == null ||
-            (currentTrackPathIndex + 1 < trackPath.Count && trackPath[currentTrackPathIndex + 1] == null))
+        if (currentPathObject == null ||
+            (currentPathIndex + 1 < trackPath.Count && trackPath[currentPathIndex + 1] == null))
         {
             ResetToPatrol(enemy, "Nodo actual o siguiente destruido.");
             return;
         }
 
         FollowPath(enemy);
-        enemy.Move();
     }
 
     private void FollowPath(TrackerEnemy enemy)
     {
-        float lookAhead = Mathf.Clamp(enemy.rb.linearVelocity.magnitude, 0.5f, 1f);
-        Vector3 future = enemy.transform.position + enemy.rb.linearVelocity.normalized * lookAhead;
+        // Actualiza el trackPath por si ha cambiado
+        currentPathIndex = trackPath.IndexOf(currentPathObject);
 
-        GameObject aObj = trackPath[currentTrackPathIndex];
-        GameObject bObj = trackPath[Mathf.Min(currentTrackPathIndex + 1, trackPath.Count - 1)];
-
-        if (aObj == null || bObj == null)
-        {
-            ResetToPatrol(enemy, "Nodo destruido durante el seguimiento.");
-            return;
-        }
-
-        Vector3 a = aObj.transform.position;
-        Vector3 b = bObj.transform.position;
-
+        if (trackPath == null || trackPath.Count < 2) return;
+        targetPoint = Vector3.zero;
+        float lookAhead = Math.Clamp(enemy.rb.linearVelocity.magnitude, 0.5f, 1f);
+        future = enemy.transform.position + enemy.rb.linearVelocity.normalized * lookAhead;
+        Vector3 a = trackPath[currentPathIndex].transform.position;
+        Vector3 b = trackPath[currentPathIndex + 1].transform.position;
         float t;
-        Vector3 normalPoint = enemy.GetNormalPoint(future, a, b, out t);
+        normalPoint = enemy.GetNormalPoint(future, a, b, out t);
 
-        // Si el punto futuro sobrepasa el tramo, avanzamos al siguiente nodo
         if (t >= 1f)
         {
-            if (currentTrackPathIndex < trackPath.Count - 2)
+            if (currentPathIndex < trackPath.Count - 2)
             {
-                currentTrackPathIndex++;
+                currentPathIndex++;
+                currentPathObject = trackPath[currentPathIndex];
+
             }
             else
             {
-                ResetToPatrol(enemy, "Final del rastro alcanzado.");
-                return;
+                currentPathIndex = 0;
             }
         }
-
         Vector3 direction = (b - a).normalized;
-        Vector3 targetPoint = normalPoint + direction * lookAhead;
+        targetPoint = normalPoint + direction * lookAhead;
+        KeepOnPath();
 
+    }
+
+    public void KeepOnPath()
+    {
+        // Solo seguir si estamos fuera del radio
         float dist = Vector3.Distance(future, normalPoint);
         if (dist > enemy.pathRadius)
             enemy.Seek(targetPoint);
+
     }
 
     private void ResetToPatrol(TrackerEnemy enemy, string reason)
     {
         enemy.isFollowingTracks = false;
-        Debug.Log($"[FollowTracksState] Cancelando seguimiento: {reason}");
+        Debug.Log($"[FSM] FollowTracksState - Cancelando seguimiento: {reason}");
 
         // Intento opcional de reengancharse si hay nuevos nodos
         // var newTracks = enemy.playerTracks.playerTracksGONodes?.ToList();
@@ -119,6 +136,45 @@ public class FollowTracksState : IEnemyState
         enemy.isFollowingTracks = false;
         trackPath = null;
         initialized = false;
-        Debug.Log("[FollowTracksState] Sale del estado.");
+        Debug.Log("[FSM] Sale del estado FollowTracksState.");
     }
+
+    // public void FollowPlayerTrsacks()
+    // {
+    //     // Si no hay rastros, terminamos
+    //     if (enemy.playerTracks == null || enemy.playerTracks.playerTracksGONodes.Count == 0)
+    //     {
+    //         enemy.isFollowingTracks = false;
+    //         return;
+    //     }
+
+    //     // Si la cola está vacía o desactualizada, la refrescamos
+    //     if (trackQueue.Count == 0 || trackQueue.LastOrDefault() != enemy.playerTracks.playerTracksGONodes.LastOrDefault())
+    //     {
+    //         trackQueue = new Queue<GameObject>(enemy.playerTracks.playerTracksGONodes);
+    //     }
+
+    //     // Si no hay target actual, tomar el primero
+    //     if (currentTrackTarget == null && trackQueue.Count > 0)
+    //     {
+    //         currentTrackTarget = trackQueue.Peek();
+    //     }
+
+    //     if (currentTrackTarget == null) return;
+
+    //     Vector3 targetPos = currentTrackTarget.transform.position;
+    //     enemy.Seek(targetPos); // usamos tu versión original de Seek()
+
+    //     float dist = Vector3.Distance(enemy.transform.position, targetPos);
+    //     if (dist <= 1.2f)
+    //     {
+    //         // Pasar al siguiente nodo
+    //         trackQueue.Dequeue();
+    //         currentTrackTarget = trackQueue.Count > 0 ? trackQueue.Peek() : null;
+    //     }
+
+    //     // Si se acaban los nodos
+    //     if (trackQueue.Count == 0)
+    //         enemy.isFollowingTracks = false;
+    // }
 }

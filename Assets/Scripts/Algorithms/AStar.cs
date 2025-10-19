@@ -10,16 +10,16 @@ namespace Assets.Scripts.Algorithms
 {
     public class AStar
     {
-        static float Heuristic(Node a, Node b)
+        static float Heuristic(GenericNode a, GenericNode b)
         {
             Vector3 p1 = a.transform.position;
             Vector3 p2 = b.transform.position;
             return Math.Abs(p1.x - p2.x) + Math.Abs(p1.z - p2.z);
         }
 
-        public static Dictionary<Node, Node> BreadthFirstSearch(Node start, Node goal, Dictionary<Node, Node> cameFrom, Dictionary<Node, float> costSoFar)
+        public static Dictionary<GenericNode, GenericNode> BreadthFirstSearch(GenericNode start, GenericNode goal, Dictionary<GenericNode, GenericNode> cameFrom, Dictionary<GenericNode, float> costSoFar)
         {
-            PriorityQueue<Node, float> frontier = new();
+            PriorityQueue<GenericNode, float> frontier = new();
             frontier.Enqueue(start, 0);
             cameFrom = new()
             {
@@ -33,7 +33,7 @@ namespace Assets.Scripts.Algorithms
 
             while (frontier.Count > 0)
             {
-                Node current = frontier.Dequeue();
+                GenericNode current = frontier.Dequeue();
                 
                 //DESCOMENTAR SI SE QUIERE PARAR AL ENCONTRAR EL NODO FINAL
                 // if (current == goal)
@@ -41,7 +41,7 @@ namespace Assets.Scripts.Algorithms
                 //     break;
                 // }
 
-                foreach (Node neighbour in current.neighbours)
+                foreach (GenericNode neighbour in current.neighbours)
                 {
                     float newCost = costSoFar[current] + current.Cost(neighbour);
                     if (!costSoFar.ContainsKey(neighbour) || costSoFar[neighbour] > newCost)
@@ -56,10 +56,10 @@ namespace Assets.Scripts.Algorithms
             return cameFrom;
         }
 
-        public static List<Node> ReconstructPath(Node start, Node goal, Dictionary<Node, Node> cameFrom)
+        public static List<GenericNode> ReconstructPath(GenericNode start, GenericNode goal, Dictionary<GenericNode, GenericNode> cameFrom)
         {
-            List<Node> path = new();
-            Node current = goal;
+            List<GenericNode> path = new();
+            GenericNode current = goal;
             if (!cameFrom.ContainsKey(goal))
             {
                 return path;

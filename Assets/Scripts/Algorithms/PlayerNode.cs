@@ -1,6 +1,6 @@
 using Assets.Scripts.Algorithms;
 
-public class PlayerNode : Node
+public class PlayerNode : GenericNode
 {
     
 }
