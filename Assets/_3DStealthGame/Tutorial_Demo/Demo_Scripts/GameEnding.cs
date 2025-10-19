@@ -57,14 +57,20 @@ namespace StealthGame
                 m_Demo_GameTimer += Time.deltaTime;
                 Demo_UpdateTimerLabel();
             }
-        
+
             if (m_IsPlayerAtExit)
             {
-                EndLevel (m_EndScreen, true, exitAudio);
+                EndLevel(m_EndScreen, true, exitAudio);
             }
             else if (m_IsPlayerCaught)
             {
-                EndLevel (m_CaughtScreen, true, caughtAudio);
+                EndLevel(m_CaughtScreen, true, caughtAudio);
+            }
+            
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                Application.Quit();
+                Time.timeScale = 0;
             }
         }
 
