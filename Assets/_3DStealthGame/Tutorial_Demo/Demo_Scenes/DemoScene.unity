@@ -19275,7 +19275,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &740647952
 Transform:
   m_ObjectHideFlags: 0
@@ -44842,14 +44842,9 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 840455984}
     m_Modifications:
-    - target: {fileID: 5152253852569768531, guid: 62e7504d08c54bf42b3a8fa592812add,
+    - target: {fileID: 2201661821619756448, guid: 62e7504d08c54bf42b3a8fa592812add,
         type: 3}
-      propertyPath: m_ProvidesContacts
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5574384581572255497, guid: 62e7504d08c54bf42b3a8fa592812add,
-        type: 3}
-      propertyPath: m_IsKinematic
+      propertyPath: m_Enabled
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5904790013994136103, guid: 62e7504d08c54bf42b3a8fa592812add,
@@ -44906,21 +44901,6 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Bat
-      objectReference: {fileID: 0}
-    - target: {fileID: 6537493377709287581, guid: 62e7504d08c54bf42b3a8fa592812add,
-        type: 3}
-      propertyPath: m_TagString
-      value: Untagged
-      objectReference: {fileID: 0}
-    - target: {fileID: 8819259836775472990, guid: 62e7504d08c54bf42b3a8fa592812add,
-        type: 3}
-      propertyPath: velocidad
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8819259836775472990, guid: 62e7504d08c54bf42b3a8fa592812add,
-        type: 3}
-      propertyPath: puntosPatrulla.Array.size
-      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 8819259836775472990, guid: 62e7504d08c54bf42b3a8fa592812add,
         type: 3}

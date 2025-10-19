@@ -68,7 +68,6 @@ public class GeneradorGrafoMurcielago : MonoBehaviour
             float dx = Mathf.Abs(otro.transform.position.x - nodo.transform.position.x);
             float dz = Mathf.Abs(otro.transform.position.z - nodo.transform.position.z);
 
-            // ✅ Conecta tanto ortogonales como diagonales
             if (dx <= distanciaEntreNodos * 1.1f && dz <= distanciaEntreNodos * 1.1f)
             {
                 nodo.Conectar(otro);
@@ -135,7 +134,7 @@ public class GeneradorGrafoMurcielago : MonoBehaviour
             }
         }
 
-        Debug.Log($"✅ Grafo creado con {nodos.Count} nodos. Nodo entrada: {nodoEntrada.name}");
+        Debug.Log($"Grafo creado con {nodos.Count} nodos. Nodo entrada: {nodoEntrada.name}");
     }
 
 #if UNITY_EDITOR

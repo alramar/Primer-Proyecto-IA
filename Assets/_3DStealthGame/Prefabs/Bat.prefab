@@ -676,7 +676,7 @@ GameObject:
   - component: {fileID: 5574384581572255497}
   m_Layer: 0
   m_Name: Bat
-  m_TagString: Enemigo
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -733,9 +733,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d8dfac2cad26c64c9bde063bac6eb47, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  detectorSonido: {fileID: 0}
+  puntosPatrulla:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   velocidad: 2
   radioDeteccionCaminar: 0.6
   radioDeteccionCorrer: 1.5
+  distanciaLlegadaNodo: 0.2
 --- !u!136 &5152253852569768531
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -782,7 +788,7 @@ Rigidbody:
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
   m_UseGravity: 1
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 84
   m_CollisionDetection: 0
@@ -1119,6 +1125,7 @@ GameObject:
   m_Component:
   - component: {fileID: 594534688785951656}
   - component: {fileID: 2201661821619756448}
+  - component: {fileID: 8760731912013167259}
   m_Layer: 0
   m_Name: soundDetector
   m_TagString: SoundCollider
@@ -1162,6 +1169,18 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.6
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &8760731912013167259
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8184606000923612182}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8afa393b43852ef4cbe843e131bfd3bc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &8742957590069641875
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,15 +1,25 @@
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using System.Collections.Generic;
 using UnityEngine;
 
 public class MurcielagoFSM
 {
-    private enum Estado { Patrulla, Persecución }
+    private enum Estado { Patrulla, Persecucion }
     private Estado estadoActual;
-    private Murcielago murcielago;
+    private Murcielago m;
+
+    private int indicePuntoPatrullaSiguiente = 0;
+    private List<NodoGrafoMurcielago> rutaActual;
+    private int indiceNodoEnRuta = 0;
+    private bool siguiendoRuta = false;
+
+    public NodoGrafoMurcielago nodoInicial;
 
     public MurcielagoFSM(Murcielago murcielago)
     {
-        this.murcielago = murcielago;
+        m = murcielago;
         estadoActual = Estado.Patrulla;
     }
 
@@ -18,128 +28,133 @@ public class MurcielagoFSM
         switch (estadoActual)
         {
             case Estado.Patrulla: Patrullar(); break;
-            case Estado.Persecución: Perseguir(); break;
+            case Estado.Persecucion: Perseguir(); break;
         }
     }
 
-    private void CambiarEstado(Estado nuevoEstado) => estadoActual = nuevoEstado;
+    public void IniciarPatrulla()
+    {
+        if (nodoInicial == null || m.puntosPatrulla.Count == 0) return;
+        CalcularRutaAlSiguienteWaypoint();
+    }
 
-    private void Patrullar() { }
+    private void Patrullar()
+    {
+        if (!siguiendoRuta || rutaActual == null || rutaActual.Count == 0) return;
+        var nodoObjetivo = rutaActual[indiceNodoEnRuta];
+        if (nodoObjetivo == null) { siguiendoRuta = false; return; }
+
+        m.transform.position = Vector3.MoveTowards(m.transform.position, nodoObjetivo.transform.position, m.velocidad * Time.deltaTime);
+
+        if (Vector3.Distance(m.transform.position, nodoObjetivo.transform.position) <= m.distanciaLlegadaNodo)
+        {
+            indiceNodoEnRuta++;
+            if (indiceNodoEnRuta >= rutaActual.Count)
+            {
+                nodoInicial = rutaActual[^1];
+                indicePuntoPatrullaSiguiente = (indicePuntoPatrullaSiguiente + 1) % m.puntosPatrulla.Count;
+                CalcularRutaAlSiguienteWaypoint();
+            }
+        }
+
+    }
+
     private void Perseguir() { }
 
-    // --- MinHeap interno para A* ---
-    private class MinHeap
+    private void CalcularRutaAlSiguienteWaypoint()
     {
-        private class HeapNode
-        {
-            public NodoGrafoMurcielago node;
-            public float priority;
-            public HeapNode(NodoGrafoMurcielago n, float p) { node = n; priority = p; }
-        }
+        siguiendoRuta = false;
+        indiceNodoEnRuta = 0;
+        rutaActual = null;
 
-        private List<HeapNode> heap = new List<HeapNode>();
-        public int Count => heap.Count;
+        var nodoInicio = nodoInicial;
+        var nodoDestino = m.puntosPatrulla[indicePuntoPatrullaSiguiente];
+        if (nodoInicio == null || nodoDestino == null) return;
 
-        public void Enqueue(NodoGrafoMurcielago node, float priority)
-        {
-            heap.Add(new HeapNode(node, priority));
-            SiftUp(heap.Count - 1);
-        }
-
-        public NodoGrafoMurcielago Dequeue()
-        {
-            if (heap.Count == 0) return null;
-            var result = heap[0].node;
-            var last = heap[^1];
-            heap.RemoveAt(heap.Count - 1);
-            if (heap.Count > 0)
-            {
-                heap[0] = last;
-                SiftDown(0);
-            }
-            return result;
-        }
-
-        private void SiftUp(int i)
-        {
-            while (i > 0)
-            {
-                int p = (i - 1) / 2;
-                if (heap[i].priority >= heap[p].priority) break;
-                (heap[i], heap[p]) = (heap[p], heap[i]);
-                i = p;
-            }
-        }
-
-        private void SiftDown(int i)
-        {
-            int n = heap.Count;
-            while (true)
-            {
-                int left = 2 * i + 1;
-                int right = 2 * i + 2;
-                int smallest = i;
-                if (left < n && heap[left].priority < heap[smallest].priority) smallest = left;
-                if (right < n && heap[right].priority < heap[smallest].priority) smallest = right;
-                if (smallest == i) break;
-                (heap[i], heap[smallest]) = (heap[smallest], heap[i]);
-                i = smallest;
-            }
-        }
+        rutaActual = BusquedaAEstrella(nodoInicio, nodoDestino);
+        if (rutaActual == null || rutaActual.Count == 0) { siguiendoRuta = false; rutaActual = null; }
+        else { siguiendoRuta = true; indiceNodoEnRuta = 0; }
     }
 
-    // --- A* usando los nuevos vecinos ---
+    private class MinHeap
+    {
+        private class HeapNode { public NodoGrafoMurcielago n; public float p; public HeapNode(NodoGrafoMurcielago n, float p) { this.n = n; this.p = p; } }
+        private List<HeapNode> heap = new List<HeapNode>();
+        public int Count => heap.Count;
+        public void Enqueue(NodoGrafoMurcielago n, float p) { heap.Add(new HeapNode(n, p)); SiftUp(heap.Count - 1); }
+        public NodoGrafoMurcielago Dequeue() { if (heap.Count == 0) return null; var r = heap[0].n; var l = heap[^1]; heap.RemoveAt(heap.Count - 1); if (heap.Count > 0) { heap[0] = l; SiftDown(0); } return r; }
+        private void SiftUp(int i) { while (i > 0) { int p = (i - 1) / 2; if (heap[i].p >= heap[p].p) break; (heap[i], heap[p]) = (heap[p], heap[i]); i = p; } }
+        private void SiftDown(int i) { int n = heap.Count; while (true) { int l = 2 * i + 1, r = 2 * i + 2, s = i; if (l < n && heap[l].p < heap[s].p) s = l; if (r < n && heap[r].p < heap[s].p) s = r; if (s == i) break; (heap[i], heap[s]) = (heap[s], heap[i]); i = s; } }
+    }
+
     public List<NodoGrafoMurcielago> BusquedaAEstrella(NodoGrafoMurcielago inicio, NodoGrafoMurcielago objetivo)
     {
         if (inicio == null || objetivo == null) return null;
         if (inicio == objetivo) return new List<NodoGrafoMurcielago> { inicio };
 
-        System.Func<NodoGrafoMurcielago, float> Heuristica =
-            n => Vector3.Distance(n.transform.position, objetivo.transform.position);
-
-        var openHeap = new MinHeap();
+        System.Func<NodoGrafoMurcielago, float> H = n => Vector3.Distance(n.transform.position, objetivo.transform.position);
+        var open = new MinHeap();
         var cameFrom = new Dictionary<NodoGrafoMurcielago, NodoGrafoMurcielago>();
-        var gScore = new Dictionary<NodoGrafoMurcielago, float>();
+        var g = new Dictionary<NodoGrafoMurcielago, float>();
         var closed = new HashSet<NodoGrafoMurcielago>();
 
-        gScore[inicio] = 0f;
-        openHeap.Enqueue(inicio, Heuristica(inicio));
+        g[inicio] = 0f;
+        open.Enqueue(inicio, H(inicio));
 
-        while (openHeap.Count > 0)
+        while (open.Count > 0)
         {
-            NodoGrafoMurcielago current = openHeap.Dequeue();
+            var current = open.Dequeue();
             if (current == null || closed.Contains(current)) continue;
-
             if (current == objetivo)
             {
                 var path = new List<NodoGrafoMurcielago>();
-                NodoGrafoMurcielago cur = current;
-                while (cur != null)
+                var c = current;
+                while (c != null)
                 {
-                    path.Add(cur);
-                    cameFrom.TryGetValue(cur, out cur);
+                    path.Add(c);
+                    cameFrom.TryGetValue(c, out c);
                 }
                 path.Reverse();
                 return path;
             }
 
             closed.Add(current);
-
-            foreach (var vecino in current.Vecinos)
+            foreach (var v in current.Vecinos)
             {
-                if (vecino == null || closed.Contains(vecino)) continue;
-
-                float tentativeG = gScore[current] + 1f;
-
-                if (!gScore.TryGetValue(vecino, out float prevG) || tentativeG < prevG)
+                if (v == null || closed.Contains(v)) continue;
+                float t = g[current] + 1f;
+                if (!g.TryGetValue(v, out float prev) || t < prev)
                 {
-                    cameFrom[vecino] = current;
-                    gScore[vecino] = tentativeG;
-                    openHeap.Enqueue(vecino, tentativeG + Heuristica(vecino));
+                    cameFrom[v] = current;
+                    g[v] = t;
+                    open.Enqueue(v, t + H(v));
                 }
             }
         }
-
         return null;
     }
+
+    #if UNITY_EDITOR
+    public void DibujarGizmosRuta()
+    {
+        if (rutaActual == null || rutaActual.Count == 0) return;
+
+        Gizmos.color = Color.green;
+        for (int i = 0; i < rutaActual.Count; i++)
+        {
+            var nodo = rutaActual[i];
+            if (nodo == null) continue;
+            Gizmos.DrawSphere(nodo.transform.position, 0.2f);
+
+            if (i < rutaActual.Count - 1 && rutaActual[i + 1] != null)
+                Gizmos.DrawLine(nodo.transform.position, rutaActual[i + 1].transform.position);
+        }
+
+        if (indiceNodoEnRuta < rutaActual.Count && rutaActual[indiceNodoEnRuta] != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawSphere(rutaActual[indiceNodoEnRuta].transform.position, 0.3f);
+        }
+    }
+    #endif
 }
