@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using StealthGame;
+using System.Linq;
+
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -31,10 +33,12 @@ public class Murcielago : MonoBehaviour
         gameEnding = FindFirstObjectByType<GameEnding>();
         player = FindFirstObjectByType<PlayerController>().gameObject;
         playerController = player.GetComponent<PlayerController>();
-        detectorSonido = GameObject.FindWithTag("SoundCollider")?.GetComponent<SphereCollider>();
-        detectorSonido.GetComponent<DetectorSonido>().playerCollider = player.GetComponent<Collider>();
-        detectorSonido.GetComponent<DetectorSonido>().fsm = fsm;
-
+        detectorSonido = GetComponentsInChildren<SphereCollider>().FirstOrDefault(sc => sc.gameObject.CompareTag("SoundCollider"));
+        if (detectorSonido != null)
+        {
+            detectorSonido.GetComponent<DetectorSonido>().playerCollider = player.GetComponent<Collider>();
+            detectorSonido.GetComponent<DetectorSonido>().fsm = fsm;
+        }
         detectorSonido.radius = radioDeteccionCorrer;
 
         BuscarNodoInicial();
