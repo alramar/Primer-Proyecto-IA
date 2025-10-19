@@ -6,9 +6,9 @@ using UnityEngine;
 
 public class MurcielagoFSM
 {
-    private enum Estado { Patrulla, Persecucion }
+    public enum Estado { Patrulla, Persecucion }
     private Estado estadoActual;
-    private Murcielago m;
+    public Murcielago m { get; private set; }
 
     private int indicePuntoPatrullaSiguiente = 0;
     private List<NodoGrafoMurcielago> rutaActual;
@@ -16,6 +16,8 @@ public class MurcielagoFSM
     private bool siguiendoRuta = false;
 
     public NodoGrafoMurcielago nodoInicial;
+    private NodoGrafoMurcielago nodoObjetivoPersecucion;
+    private Vector3 ultimaPosicionDetectada;
 
     public MurcielagoFSM(Murcielago murcielago)
     {
@@ -32,10 +34,25 @@ public class MurcielagoFSM
         }
     }
 
+    public void CambiarEstado(Estado nuevoEstado)
+    {
+        if (estadoActual == nuevoEstado) return;
+        estadoActual = nuevoEstado;
+    }
+
     public void IniciarPatrulla()
     {
         if (nodoInicial == null || m.puntosPatrulla.Count == 0) return;
         CalcularRutaAlSiguienteWaypoint();
+    }
+
+    private void OrientarHacia(Vector3 objetivo)
+    {
+        Vector3 dir = objetivo - m.transform.position;
+        dir.y = 0f;
+        if (dir.sqrMagnitude < 0.0001f) return;
+        Quaternion target = Quaternion.LookRotation(dir.normalized);
+        m.transform.rotation = Quaternion.Slerp(m.transform.rotation, target, m.velocidadRotacion * Time.deltaTime);
     }
 
     private void Patrullar()
@@ -44,6 +61,7 @@ public class MurcielagoFSM
         var nodoObjetivo = rutaActual[indiceNodoEnRuta];
         if (nodoObjetivo == null) { siguiendoRuta = false; return; }
 
+        OrientarHacia(nodoObjetivo.transform.position);
         m.transform.position = Vector3.MoveTowards(m.transform.position, nodoObjetivo.transform.position, m.velocidad * Time.deltaTime);
 
         if (Vector3.Distance(m.transform.position, nodoObjetivo.transform.position) <= m.distanciaLlegadaNodo)
@@ -59,7 +77,26 @@ public class MurcielagoFSM
 
     }
 
-    private void Perseguir() { }
+    private void Perseguir()
+    {
+        if (!siguiendoRuta || rutaActual == null || rutaActual.Count == 0) return;
+        var nodoObjetivo = rutaActual[indiceNodoEnRuta];
+        if (nodoObjetivo == null) { siguiendoRuta = false; return; }
+
+        OrientarHacia(nodoObjetivo.transform.position);
+        m.transform.position = Vector3.MoveTowards(m.transform.position, nodoObjetivo.transform.position, m.velocidad * Time.deltaTime);
+
+        if (Vector3.Distance(m.transform.position, nodoObjetivo.transform.position) <= m.distanciaLlegadaNodo)
+        {
+            indiceNodoEnRuta++;
+            if (indiceNodoEnRuta >= rutaActual.Count)
+            {
+                nodoInicial = rutaActual[^1];
+                CambiarEstado(Estado.Patrulla);
+                IniciarPatrulla();
+            }
+        }
+    }
 
     private void CalcularRutaAlSiguienteWaypoint()
     {
@@ -74,6 +111,49 @@ public class MurcielagoFSM
         rutaActual = BusquedaAEstrella(nodoInicio, nodoDestino);
         if (rutaActual == null || rutaActual.Count == 0) { siguiendoRuta = false; rutaActual = null; }
         else { siguiendoRuta = true; indiceNodoEnRuta = 0; }
+    }
+
+    public void EmpezarPersecucionHacia(Vector3 posicionDetectada)
+    {
+        ultimaPosicionDetectada = posicionDetectada;
+
+        var nodoDestino = m.EncontrarNodoMasCercano(posicionDetectada);
+        if (nodoDestino == null) return;
+
+        nodoObjetivoPersecucion = nodoDestino;
+        nodoInicial = m.EncontrarNodoMasCercano(m.transform.position);
+        if (nodoInicial == null) return;
+
+        rutaActual = BusquedaAEstrella(nodoInicial, nodoObjetivoPersecucion);
+        if (rutaActual == null || rutaActual.Count == 0)
+        {
+            siguiendoRuta = false;
+            rutaActual = null;
+            CambiarEstado(Estado.Persecucion);
+            return;
+        }
+
+        indiceNodoEnRuta = 0;
+        siguiendoRuta = true;
+        CambiarEstado(Estado.Persecucion);
+    }
+
+    public void ActualizarPosicionDetectada(Vector3 posicionDetectada)
+    {
+        ultimaPosicionDetectada = posicionDetectada;
+        var nuevoNodo = m.EncontrarNodoMasCercano(posicionDetectada);
+        if (nuevoNodo == null) return;
+
+        if (nodoObjetivoPersecucion == null || nuevoNodo != nodoObjetivoPersecucion)
+        {
+            nodoObjetivoPersecucion = nuevoNodo;
+            nodoInicial = m.EncontrarNodoMasCercano(m.transform.position);
+            if (nodoInicial == null) return;
+
+            rutaActual = BusquedaAEstrella(nodoInicial, nodoObjetivoPersecucion);
+            if (rutaActual == null || rutaActual.Count == 0) { siguiendoRuta = false; rutaActual = null; }
+            else { siguiendoRuta = true; indiceNodoEnRuta = 0; }
+        }
     }
 
     private class MinHeap
