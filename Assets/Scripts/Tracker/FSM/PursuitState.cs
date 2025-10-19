@@ -72,7 +72,7 @@ public class PursuitState : IEnemyState
         }
         else
         {
-            Debug.Log("AVER " + path.Count + " / " + currentPathIndex);
+            //Debug.Log("AVER " + path.Count + " / " + currentPathIndex);
             targetPoint = Vector3.zero;
             float lookAhead = Math.Clamp(enemy.rb.linearVelocity.magnitude, 0.5f, 1f);
             future = enemy.transform.position + enemy.rb.linearVelocity.normalized * lookAhead;
