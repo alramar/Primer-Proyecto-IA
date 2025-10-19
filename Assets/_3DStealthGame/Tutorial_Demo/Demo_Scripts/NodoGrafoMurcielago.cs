@@ -1,50 +1,31 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class NodoGrafoMurcielago : MonoBehaviour
 {
-    [System.Serializable]
-    public class Arco
-    {
-        public NodoGrafoMurcielago vecino;
+    [SerializeField] private List<NodoGrafoMurcielago> vecinos = new List<NodoGrafoMurcielago>();
 
-        [SerializeReference]
-        public Arco siguiente;
-
-        public Arco(NodoGrafoMurcielago vecino, Arco siguiente)
-        {
-            this.vecino = vecino;
-            this.siguiente = siguiente;
-        }
-    }
-
-    public Arco primerArco;
-    public int grado;
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawSphere(transform.position, 0.1f);
-
-        Gizmos.color = Color.red;
-        for (Arco arco = primerArco; arco != null; arco = arco.siguiente)
-        {
-            if (arco.vecino != null)
-                Gizmos.DrawLine(transform.position, arco.vecino.transform.position);
-        }
-    }
+    public IReadOnlyList<NodoGrafoMurcielago> Vecinos => vecinos;
 
     public void Conectar(NodoGrafoMurcielago otro)
     {
         if (otro == null || otro == this) return;
-
-        for (Arco arco = primerArco; arco != null; arco = arco.siguiente)
+        if (!vecinos.Contains(otro))
         {
-            if (arco.vecino == otro)
-                return;
+            vecinos.Add(otro);
         }
+    }
 
-        primerArco = new Arco(otro, primerArco);
-        grado++;
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawSphere(transform.position, 0.1f);
+
+        Gizmos.color = Color.red;
+        foreach (var v in vecinos)
+        {
+            if (v != null)
+                Gizmos.DrawLine(transform.position, v.transform.position);
+        }
     }
 }
