@@ -13,55 +13,21 @@ public class GeneradorGrafoMurcielago : MonoBehaviour
     private NodoGrafoMurcielago nodoEntrada = null;
     private Vector3 origenGrid;
 
-    private class Arco
-    {
-        public NodoGrafoMurcielago vecino;
-        public Arco siguiente;
-
-        public Arco(NodoGrafoMurcielago vecino, Arco siguiente)
-        {
-            this.vecino = vecino;
-            this.siguiente = siguiente;
-        }
-    }
-
-    private class NodoGrafoMurcielago : MonoBehaviour
-    {
-        public Arco primerArco;
-        public int grado;
-        
-        private void OnDrawGizmos()
-        {
-            Gizmos.color = Color.cyan;
-            Gizmos.DrawSphere(transform.position, 0.1f);
-
-            Gizmos.color = Color.red;
-            for (Arco arco = primerArco; arco != null; arco = arco.siguiente)
-            {
-                if (arco.vecino != null)
-                    Gizmos.DrawLine(transform.position, arco.vecino.transform.position);
-            }
-        }
-
-        public void Conectar(NodoGrafoMurcielago otro)
-        {
-            if (otro == null || otro == this) return;
-            for (Arco arco = primerArco; arco != null; arco = arco.siguiente)
-            {
-                if (arco.vecino == otro) return;
-            }
-            primerArco = new Arco(otro, primerArco);
-            grado++;
-        }
-    }
-
     private void Vaciar()
     {
+        if (Application.isPlaying)
+        {
+            Debug.LogWarning("No se puede vaciar el grafo en modo Play.");
+            return;
+        }
+
         NodoGrafoMurcielago[] nodosExistentes = GetComponentsInChildren<NodoGrafoMurcielago>();
         foreach (NodoGrafoMurcielago nodo in nodosExistentes)
         {
-            DestroyImmediate(nodo.gameObject);
+            if (nodo != null)
+                DestroyImmediate(nodo.gameObject);
         }
+
         nodos.Clear();
         nodoEntrada = null;
     }
@@ -95,25 +61,23 @@ public class GeneradorGrafoMurcielago : MonoBehaviour
             float dx = Mathf.Abs(otro.transform.position.x - x);
             float dz = Mathf.Abs(otro.transform.position.z - z);
 
-            // 🔹 Conexión con vecinos cercanos (hasta 8 direcciones)
-            if (dx <= distanciaEntreNodos * 1.1f && dz <= distanciaEntreNodos * 1.1f)
+            if (dx <= distanciaEntreNodos * 1.1f && dz <= distanciaEntreNodos * 1.1f && otro != nodo)
             {
-                if (otro != nodo)
-                {
-                    nodo.Conectar(otro);
-                    otro.Conectar(nodo);
-                }
+                nodo.Conectar(otro);
+                otro.Conectar(nodo);
             }
         }
     }
 
-    // ===========================
-    // Método principal
-    // ===========================
-
     [ContextMenu("Crear Grafo")]
     public void CrearGrafo()
     {
+        if (Application.isPlaying)
+        {
+            Debug.LogWarning("No se puede crear el grafo durante el juego.");
+            return;
+        }
+
         Vaciar();
 
         GameObject superficie = GameObject.FindWithTag(tagSuperficie);
@@ -145,6 +109,7 @@ public class GeneradorGrafoMurcielago : MonoBehaviour
                         primerNodoCreado = true;
                         origenGrid = pos;
                     }
+
                     float offsetX = Mathf.Round((x - origenGrid.x) / distanciaEntreNodos) * distanciaEntreNodos;
                     float offsetZ = Mathf.Round((z - origenGrid.z) / distanciaEntreNodos) * distanciaEntreNodos;
                     pos = new Vector3(origenGrid.x + offsetX, alturaGrafo, origenGrid.z + offsetZ);
