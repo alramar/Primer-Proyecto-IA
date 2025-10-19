@@ -1,0 +1,42 @@
+using UnityEngine;
+using System.Collections.Generic;
+namespace Assets.Scripts.Algorithms
+{
+    [RequireComponent(typeof(SphereCollider))]
+
+    public class GenericNode : MonoBehaviour
+    {
+        [SerializeField]
+        public List<GenericNode> neighbours;
+        Collider collider;
+
+        // Start is called once before the first execution of Update after the MonoBehaviour is created
+        void Start()
+        {
+            collider = GetComponent<SphereCollider>();
+        }
+
+        // Update is called once per frame
+        void Update()
+        {
+
+        }
+
+        void OnTriggerEnter(Collider other)
+        {
+            //Debug.Log(other.name + " entered " + name);
+        }
+        public float Cost(GenericNode neighbour)
+        {
+            if (neighbours.Contains(neighbour)) //Checks if it's a neighbour 
+            { 
+                return Vector3.Distance(transform.position, neighbour.transform.position);
+            }
+            return float.PositiveInfinity; // If not a neighbour put an enormous weight/cost
+        }
+    }
+
+
+}
+
+

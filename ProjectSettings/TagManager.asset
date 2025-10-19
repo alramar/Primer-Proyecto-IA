@@ -10,15 +10,15 @@ TagManager:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Player
   - Water
   - UI
-  - 
+  - Enemy
   - 
   - Post Processing Volumes
-  - 
-  - 
-  - 
+  - Game Events
+  - Nodes
+  - Doors
   - 
   - 
   - 
