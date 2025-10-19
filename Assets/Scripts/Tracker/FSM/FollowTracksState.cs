@@ -33,7 +33,7 @@ public class FollowTracksState : IEnemyState
         if (trackPath == null || trackPath.Count < 2)
         {
             enemy.stateMachine.ChangeState(new PatrolState(), enemy);
-            enemy.target = enemy.playerTracks.player.GetComponent<PlayerMovement>();
+            enemy.target = enemy.playerTracks.player.GetComponent<PlayerController>();
             return;
         }
 

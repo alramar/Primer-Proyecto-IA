@@ -20,7 +20,7 @@ public class PlayerTracks : MonoBehaviour
     {
         playerTracksGONodes = new();
         latestPlayerNode = Instantiate(nodePrefab, player.transform.position + new Vector3(0, transform.position.y, 0), player.transform.rotation * Quaternion.AngleAxis(90,Vector3.up), transform);
-        latestPlayerNode.transform.GetChild(0).transform.position -= new Vector3(0,transform.position.y,0)*0.85f;
+        latestPlayerNode.transform.GetChild(0).transform.position -= new Vector3(0,transform.position.y,0)*0.5f;
         playerTracksGONodes.Enqueue(latestPlayerNode);
     }
 
@@ -30,7 +30,7 @@ public class PlayerTracks : MonoBehaviour
         if (Vector3.Distance(latestPlayerNode.transform.position, player.transform.position) >= distanceBetweenNodes)
         {
             latestPlayerNode = Instantiate(nodePrefab, player.transform.position + new Vector3(0, transform.position.y, 0), player.transform.rotation * Quaternion.AngleAxis(90,Vector3.up), transform);
-            latestPlayerNode.transform.GetChild(0).transform.position -= new Vector3(0,transform.position.y,0)*0.85f;
+            latestPlayerNode.transform.GetChild(0).transform.position -= new Vector3(0,transform.position.y,0)*0.5f;
             playerTracksGONodes.Enqueue(latestPlayerNode);
             if (playerTracksGONodes.Count >= maxNumberOfTrails)
             {

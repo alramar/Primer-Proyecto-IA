@@ -38,8 +38,8 @@ public class TrackerEnemy : Enemy
     public EnemyStateMachine stateMachine;
     Vector3 steer;
     public Rigidbody rb;
-    public PlayerMovement target;
-    [SerializeField] private PlayerMovement playerRef;
+    public PlayerController target;
+    [SerializeField] private PlayerController playerRef;
     public float maxForce;
     [Header("Pursuit settings")]
     public float pursuitTimer = 0f;
@@ -88,9 +88,9 @@ public class TrackerEnemy : Enemy
         if (playerRef == null)
         {
             var go = GameObject.FindWithTag("Player");
-            if (go != null) playerRef = go.GetComponent<PlayerMovement>();
+            if (go != null) playerRef = go.GetComponent<PlayerController>();
             if (playerRef == null)
-                Debug.LogWarning("[TrackerEnemy] No se ha asignado playerRef y no se encontró un GameObject con Tag 'Player' con PlayerMovement.");
+                Debug.LogWarning("[TrackerEnemy] No se ha asignado playerRef y no se encontró un GameObject con Tag 'Player' con PlayerController.");
         }
 
     }
@@ -386,7 +386,7 @@ public class TrackerEnemy : Enemy
     //             currentTrackPathObject = null;
     //             trackPath = null;
     //             isFollowingTracks = false;
-    //             target = playerTracks.player.GetComponent<PlayerMovement>();
+    //             target = playerTracks.player.GetComponent<PlayerController>();
     //         }
     //     }
     //     Vector3 direction = (b - a).normalized;
