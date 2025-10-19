@@ -15,6 +15,7 @@ public class DetectorSonido : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
+            Debug.Log("Jugador detectado por el murciélago.");
             jugadorDentro = true;
             timer = 0f;
             fsm?.EmpezarPersecucionHacia(other.transform.position);
@@ -25,6 +26,7 @@ public class DetectorSonido : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
+            Debug.Log("Jugador salió del área de detección.");
             jugadorDentro = false;
         }
     }

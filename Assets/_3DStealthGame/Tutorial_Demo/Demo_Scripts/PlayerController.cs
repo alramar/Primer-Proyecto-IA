@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using StealthGame;
 
 public class PlayerController : MonoBehaviour
 {

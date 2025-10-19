@@ -734,11 +734,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   detectorSonido: {fileID: 0}
+  intervaloActualizacion: 0.5
   puntosPatrulla:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
   velocidad: 2
+  velocidadRotacion: 6
   radioDeteccionCaminar: 0.6
   radioDeteccionCorrer: 1.5
   distanciaLlegadaNodo: 0.2
@@ -1165,7 +1167,7 @@ SphereCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 1
   m_ProvidesContacts: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 3
   m_Radius: 0.6
   m_Center: {x: 0, y: 0, z: 0}
@@ -1181,6 +1183,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8afa393b43852ef4cbe843e131bfd3bc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playerCollider: {fileID: 0}
+  intervaloActualizacion: 0.5
 --- !u!1 &8742957590069641875
 GameObject:
   m_ObjectHideFlags: 0
